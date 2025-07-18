@@ -8,15 +8,12 @@ import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.effect.Glow;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.*;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.ArcType;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 import java.util.*;
@@ -32,7 +29,6 @@ public class Roue {
     /* ============================================================ */
     /* 1)  Paramètres visuels                                       */
     /* ============================================================ */
-    private static final double HUB_RADIUS      = Main.WHEEL_RADIUS * .28;
 
     private static final Color METAL_LIGHT  = Color.web("#cfcfcf");
     private static final Color METAL_DARK   = Color.web("#777777");
@@ -125,7 +121,6 @@ public class Roue {
             wheelGroup.getChildren().add(a);
             start += step;
         }
-        wheelGroup.getChildren().add(buildHub());
     }
 
     /* ============================================================ */
@@ -231,28 +226,6 @@ public class Roue {
         a.setStroke(METAL_LIGHT);
         a.setStrokeWidth(1.2);
         return a;
-    }
-    private Node buildHub(){
-        double r = HUB_RADIUS;
-        Circle metal = new Circle(r, METAL_LIGHT);
-        metal.setStroke(METAL_DARK);
-        metal.setStrokeWidth(4);
-
-        Text shield = new Text("\uD83D\uDEE1");       // centre emoji
-        shield.setFont(Font.font("Segoe UI Emoji", r*0.9));
-        shield.setTranslateX(-r*0.4);      // correction optique
-        shield.setTranslateY(-r*0.3);
-
-        // halo pulsant
-        DropShadow glow = new DropShadow(20, HIGHLIGHT);
-        metal.setEffect(glow);
-        Timeline t = new Timeline(
-                new KeyFrame(Duration.ZERO,  new KeyValue(glow.radiusProperty(), 14)),
-                new KeyFrame(Duration.seconds(1.2), new KeyValue(glow.radiusProperty(), 24))
-        );
-        t.setAutoReverse(true); t.setCycleCount(Animation.INDEFINITE); t.play();
-
-        return new StackPane(metal, shield);
     }
 
     /* ============================================================ */
