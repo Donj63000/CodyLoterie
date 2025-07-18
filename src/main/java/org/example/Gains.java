@@ -46,7 +46,7 @@ public class Gains {
         // ► Binding qui formate la cagnotte avec des espaces tous les 3 chiffres
         lblTotal.textProperty().bind(
                 Bindings.createStringBinding(() -> {
-                    int total = participants.stream().mapToInt(Participant::getKamas).sum()
+                    int total = participants.stream().mapToInt(Participant::getLevel).sum()
                             + extraKamas.get();
                     // Mise en forme : ",d" produit "23,000,000" → on remplace ',' par ' '
                     String formatted = String.format("%,d", total).replace(',', ' ');
@@ -144,7 +144,7 @@ public class Gains {
     private void refreshObjets() {
         objets.setAll(
                 participants.stream()
-                        .map(Participant::getDonation)
+                        .map(Participant::getClasse)
                         .filter(s -> s != null && !s.isBlank() && !s.equals("-"))
                         .toList()
         );
