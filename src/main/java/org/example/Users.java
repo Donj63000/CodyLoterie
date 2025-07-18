@@ -27,12 +27,12 @@ public class Users {
 
         /* === Colonnes ================================================= */
         TableColumn<Participant,String>  colNom   = new TableColumn<>("Nom");
-        TableColumn<Participant,Integer> colKamas = new TableColumn<>("Kamas");
-        TableColumn<Participant,String>  colDon   = new TableColumn<>("Don");
+        TableColumn<Participant,Integer> colLevel = new TableColumn<>("Level");
+        TableColumn<Participant,String>  colClasse= new TableColumn<>("Classe");
 
-        colNom  .setCellValueFactory(p -> new SimpleStringProperty (p.getValue().getName()));
-        colKamas.setCellValueFactory(p -> new SimpleIntegerProperty(p.getValue().getKamas()).asObject());
-        colDon  .setCellValueFactory(p -> new SimpleStringProperty (p.getValue().getDonation()));
+        colNom   .setCellValueFactory(p -> new SimpleStringProperty (p.getValue().getName()));
+        colLevel .setCellValueFactory(p -> new SimpleIntegerProperty(p.getValue().getLevel()).asObject());
+        colClasse.setCellValueFactory(p -> new SimpleStringProperty (p.getValue().getClasse()));
 
         /* === Cellule colorée par INDEX de ligne ======================= */
         colNom.setCellFactory(column -> new TableCell<>() {
@@ -48,18 +48,18 @@ public class Users {
                 setStyle("-fx-text-fill:" + Theme.toWebColor(c) + ";");
             }
         });
-        colKamas.setCellFactory(c -> new TextFieldTableCell<>(new IntegerStringConverter()));
-        colDon  .setCellFactory(TextFieldTableCell.forTableColumn());
+        colLevel .setCellFactory(c -> new TextFieldTableCell<>(new IntegerStringConverter()));
+        colClasse.setCellFactory(TextFieldTableCell.forTableColumn());
 
-        table.getColumns().addAll(colNom, colKamas, colDon);
+        table.getColumns().addAll(colNom, colLevel, colClasse);
         table.setEditable(true);
         table.setPrefHeight(600);
         Theme.styleTableView(table);
 
         /* === Formulaire =============================================== */
         TextField tNom   = new TextField(); tNom.setPromptText("Pseudo");  Theme.styleTextField(tNom);
-        TextField tKamas = new TextField(); tKamas.setPromptText("Kamas"); Theme.styleTextField(tKamas);
-        TextField tDon   = new TextField(); tDon.setPromptText("Don");    Theme.styleTextField(tDon);
+        TextField tLevel  = new TextField(); tLevel.setPromptText("Level");  Theme.styleTextField(tLevel);
+        TextField tClasse = new TextField(); tClasse.setPromptText("Classe"); Theme.styleTextField(tClasse);
 
         Button add = new Button("Ajouter");   Theme.styleButton(add);
         Button del = new Button("Supprimer"); Theme.styleButton(del);
@@ -67,9 +67,9 @@ public class Users {
         add.setOnAction(e -> {
             String n = tNom.getText().trim();
             if(!n.isEmpty()){
-                int k = tKamas.getText().isBlank()?0:Integer.parseInt(tKamas.getText());
-                participants.add(new Participant(n,k,tDon.getText().trim()));
-                tNom.clear(); tKamas.clear(); tDon.clear();
+                int lv = tLevel.getText().isBlank()?0:Integer.parseInt(tLevel.getText());
+                participants.add(new Participant(n,lv,tClasse.getText().trim()));
+                tNom.clear(); tLevel.clear(); tClasse.clear();
             }
         });
         del.setOnAction(e -> {
@@ -81,7 +81,7 @@ public class Users {
         Label lbl = new Label("Participants :");
         Theme.styleCapsuleLabel(lbl, "#4facfe", "#00f2fe");
 
-        root.getChildren().addAll(lbl, table, tNom, tKamas, tDon, add, del);
+        root.getChildren().addAll(lbl, table, tNom, tLevel, tClasse, add, del);
 
         /* === Sync roue ↔ table ======================================== */
         participants.addListener((ListChangeListener<Participant>) change -> {

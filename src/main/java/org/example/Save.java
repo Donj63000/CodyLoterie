@@ -24,10 +24,10 @@ public final class Save {
 
         StringBuilder sb = new StringBuilder("#Participants\n");
         for (Participant p : participants) {
-            // nom;kamas;don
+            // nom;level;classe
             sb.append(p.getName()).append(';')
-                    .append(p.getKamas()).append(';')
-                    .append(p.getDonation()).append('\n');
+                    .append(p.getLevel()).append(';')
+                    .append(p.getClasse()).append('\n');
         }
 
         // Ancienne section Objets/Bons supprimée

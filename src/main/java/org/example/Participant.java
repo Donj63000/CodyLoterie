@@ -3,18 +3,18 @@ package org.example;
 /**
  * Simple classe de données décrivant un participant :
  * - Pseudo (name)
- * - Mise en kamas
- * - Donation (objet éventuel)
+ * - Classe du personnage
+ * - Niveau (level)
  */
 public class Participant {
     private final String name;
-    private int kamas;         // Mise en kamas
-    private String donation;   // Texte libre : "Cape Obsi", "-", etc.
+    private int level;         // Niveau du joueur
+    private String classe;     // Classe du personnage
 
-    public Participant(String name, int kamas, String donation) {
+    public Participant(String name, int level, String classe) {
         this.name = name;
-        this.kamas = kamas;
-        this.donation = donation;
+        this.level = level;
+        this.classe = classe;
     }
 
     /* ============== Getters et Setters ============== */
@@ -22,19 +22,19 @@ public class Participant {
         return name;
     }
 
-    public int getKamas() {
-        return kamas;
+    public int getLevel() {
+        return level;
     }
 
-    public void setKamas(int kamas) {
-        this.kamas = kamas;
+    public void setLevel(int level) {
+        this.level = level;
     }
 
-    public String getDonation() {
-        return donation;
+    public String getClasse() {
+        return classe;
     }
 
-    public void setDonation(String donation) {
-        this.donation = donation;
+    public void setClasse(String classe) {
+        this.classe = classe;
     }
 }
