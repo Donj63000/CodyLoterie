@@ -51,7 +51,6 @@ public class Roue {
     /* ============================================================ */
     private final StackPane root;
     private final Group     wheelGroup;
-    private final RotateTransition rot;
     private final Resultat  resultat;
     private final List<Arc> arcs = new ArrayList<>();
 
@@ -70,7 +69,6 @@ public class Roue {
     /* ============================================================ */
     public Roue(Resultat res){
         this.resultat = res;
-        this.rot = new RotateTransition();
 
         root = new StackPane();
         root.setAlignment(Pos.CENTER);
@@ -108,7 +106,6 @@ public class Roue {
         buildSeatArrays(malus);
 
         wheelGroup.setRotate(0);
-        rot.stop();
         wheelGroup.getChildren().clear();
         arcs.clear();
 
@@ -131,33 +128,52 @@ public class Roue {
         spinTheWheel();
     }
     public void spinTheWheel(){
-        if(winFx!=null){ winFx.stop(); clearHighlight(); }
 
-        int total = seatNames==null?0:seatNames.length;
-        if(total==0){ resultat.setMessage("Aucun malus – impossible de lancer la roue."); return; }
+        if (winFx != null) { winFx.stop(); clearHighlight(); }
 
-        int idx = ThreadLocalRandom.current().nextInt(total);
-        double step = 360d/total;
-        double end  = 1080 + idx*step + step/2 - 90;
+        if (seatNames.length == 0) {
+            resultat.setMessage("Aucun malus – impossible de lancer la roue.");
+            return;
+        }
 
-        rot.setDuration(Duration.seconds(OptionRoue.getSpinDuration()));
-        rot.setNode(wheelGroup);
-        rot.setFromAngle(wheelGroup.getRotate());
-        rot.setToAngle(wheelGroup.getRotate() + end);
-        rot.setInterpolator(new Interpolator() {
-            @Override protected double curve(double t) {
-                double s = 1.70158;
-                t -= 1;
-                return (t*t*((s+1)*t + s) + 1);
-            }
-        });
-        rot.setOnFinished(e -> {
+        int idx = ThreadLocalRandom.current().nextInt(seatNames.length);
+        double sector = stepAngle();
+        double target = idx * sector + sector / 2 - 90;
+        double totalTurns = 6;                           // à ajuster
+        double finalAngle = totalTurns * 360 + target;
+
+        DoubleProperty angle = wheelGroup.rotateProperty();
+
+        // 1) Accélération (0 → 720 ° en 10 % du temps, ease-in)
+        KeyFrame kfStart = new KeyFrame(
+                Duration.seconds(OptionRoue.getSpinDuration() * .10),
+                new KeyValue(angle, 720, Interpolator.SPLINE(0.42, 0.0, 1.0, 1.0))
+        );
+
+        // 2) Décélération (720 ° → finalAngle en 90 % du temps, ease-out)
+        KeyFrame kfStop = new KeyFrame(
+                Duration.seconds(OptionRoue.getSpinDuration()),
+                new KeyValue(angle, finalAngle, Interpolator.SPLINE(0.0, 0.0, 0.58, 1.0))
+        );
+
+        Timeline spin = new Timeline(
+                new KeyFrame(Duration.ZERO,     new KeyValue(angle, 0)),
+                kfStart,
+                kfStop
+        );
+
+        spin.setOnFinished(e -> {
             String malus = seatNames[idx];
             resultat.setMessage("Malus : " + malus);
-            if(spinCallback!=null) spinCallback.accept(malus);
+            if (spinCallback != null) spinCallback.accept(malus);
             highlightWinner(idx);
         });
-        rot.play();
+
+        spin.play();
+    }
+
+    private double stepAngle() {
+        return 360.0 / seatNames.length;
     }
 
     /* ============================================================ */
