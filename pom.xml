@@ -119,6 +119,7 @@
                 <version>${javafx.maven.plugin.version}</version>
                 <configuration>
                     <mainClass>org.example.Launcher</mainClass>
+                    <jvmArgs>-Dprism.msaaSamples=4</jvmArgs>
                 </configuration>
             </plugin>
 
