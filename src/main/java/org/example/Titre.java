@@ -7,14 +7,18 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
+import javafx.scene.effect.BlendMode;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.*;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.StrokeType;
 import javafx.scene.text.*;
 import javafx.util.Duration;
 
 import java.util.Random;
+import java.util.stream.Stream;
 
 public class Titre {
 
@@ -25,10 +29,16 @@ public class Titre {
     // Couleurs (texte) : on fait une transition progressive de old → new
     private Color oldC1, oldC2, oldC3, newC1, newC2, newC3;
 
-    // Couleurs (reflet)
-    private Color oldSh, newSh;
 
     private final Random rand = new Random();
+
+    // Palette "warm combat"
+    private static final Color[] WARM = {
+            Color.web("#ff4e50"),
+            Color.web("#ff6e40"),
+            Color.web("#ff9e2c"),
+            Color.web("#ffd452")
+    };
 
     public Titre() {
         // ====== TEXTE ======
@@ -38,13 +48,41 @@ public class Titre {
         title.setCache(true);
         title.setCacheHint(CacheHint.SCALE_AND_ROTATE);
 
-        // Halo néon
-        var glow = new DropShadow(14, Color.web("#4facfe"));
-        glow.setSpread(0.3);
-        title.setEffect(glow);
+        // Contour métallique
+        title.setStroke(Color.web("#cfd8dc"));
+        title.setStrokeWidth(2);
+        title.setStrokeType(StrokeType.OUTSIDE);
+
+        // Halo pulsant
+        DropShadow fire = new DropShadow(14, Color.web("#ff6e40"));
+        fire.setSpread(0.35);
+        title.setEffect(fire);
+
+        Timeline pulse = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(fire.radiusProperty(), 14)),
+                new KeyFrame(Duration.seconds(1), new KeyValue(fire.radiusProperty(), 20))
+        );
+        pulse.setAutoReverse(true);
+        pulse.setCycleCount(Animation.INDEFINITE);
+        pulse.play();
+
+        Text swordLeft  = new Text("⚔");
+        Text swordRight = new Text("⚔");
+        Stream.of(swordLeft, swordRight).forEach(t -> {
+            t.setFont(Font.font("Segoe UI Emoji", FontWeight.BOLD, 28));
+            t.setFill(Color.web("#ffe082"));
+            t.setEffect(new DropShadow(5, Color.web("#ff6e40")));
+        });
+        HBox content = new HBox(8, swordLeft, title, swordRight);
+        content.setAlignment(Pos.CENTER_LEFT);
+
+        TranslateTransition vib = new TranslateTransition(Duration.seconds(.12), swordRight);
+        vib.setFromX(0); vib.setToX(3);
+        vib.setCycleCount(Animation.INDEFINITE); vib.setAutoReverse(true);
+        vib.play();
 
         // Conteneur (réduit)
-        root = new StackPane(title);
+        root = new StackPane(content);
         root.setAlignment(Pos.TOP_LEFT);
         // Moins de padding => l'élément en dessous remonte
         root.setPadding(new Insets(2, 0, 1, 20));
@@ -61,6 +99,11 @@ public class Titre {
                 title.layoutBoundsProperty()
         ));
         shimmer.setRotate(25);
+        shimmer.setBlendMode(BlendMode.OVERLAY);
+        shimmer.setFill(new LinearGradient(0,0,1,0,true,CycleMethod.NO_CYCLE,
+                new Stop(0, Color.TRANSPARENT),
+                new Stop(.4, Color.WHITE.deriveColor(0,1,1,0.75)),
+                new Stop(.6, Color.TRANSPARENT)));
         root.getChildren().add(shimmer);
 
         var tt = new TranslateTransition(Duration.seconds(4), shimmer);
@@ -86,21 +129,18 @@ public class Titre {
     private void startColorCycle() {
         // Au début de chaque cycle, old = new (ou random init)
         if (oldC1 == null) {
-            oldC1 = randomColor();
-            oldC2 = randomColor();
-            oldC3 = randomColor();
-            oldSh = randomColor();
+            oldC1 = randomWarm();
+            oldC2 = randomWarm();
+            oldC3 = randomWarm();
         } else {
             oldC1 = newC1;
             oldC2 = newC2;
             oldC3 = newC3;
-            oldSh = newSh;
         }
         // On pioche un nouveau set
-        newC1 = randomColor();
-        newC2 = randomColor();
-        newC3 = randomColor();
-        newSh = randomColor();
+        newC1 = randomWarm();
+        newC2 = randomWarm();
+        newC3 = randomWarm();
 
         DoubleProperty t = new SimpleDoubleProperty(0);
         t.addListener((o, ov, nv) -> {
@@ -111,13 +151,6 @@ public class Titre {
             Color c3 = lerpColor(oldC3, newC3, frac);
             // On met à jour le dégradé du texte
             title.setFill(makeGradient(c1, c2, c3));
-
-            // Interpolation de la couleur du shimmer
-            Color shC = lerpColor(oldSh, newSh, frac);
-            shimmer.setFill(new LinearGradient(0,0,1,0,true, CycleMethod.NO_CYCLE,
-                    new Stop(0, Color.TRANSPARENT),
-                    new Stop(.5, shC.deriveColor(0,1,1,0.4)), // alpha .4
-                    new Stop(1, Color.TRANSPARENT)));
         });
 
         // On anime t de 0 → 1 sur 8 s
@@ -133,6 +166,9 @@ public class Titre {
     // ====================== Méthodes d’aide ======================
     private Color randomColor() {
         return Color.hsb(rand.nextDouble()*360, 0.9, 1.0);
+    }
+    private Color randomWarm() {
+        return WARM[rand.nextInt(WARM.length)];
     }
     private Color lerpColor(Color a, Color b, double f) {
         return new Color(
