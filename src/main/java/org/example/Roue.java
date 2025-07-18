@@ -13,7 +13,7 @@ import javafx.scene.paint.*;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.ArcType;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Polygon;
+import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 
 import java.util.*;
@@ -29,12 +29,11 @@ public class Roue {
     /* ============================================================ */
     /* 1)  Paramètres visuels                                       */
     /* ============================================================ */
-    private static final double HUB_RADIUS      = Main.WHEEL_RADIUS * .28;
-    private static final Color  HUB_STROKE      = Color.web("#d4af37");
-    private static final double HUB_STROKE_W    = 3;
-
-    private static final Color  SECTOR_BORDER   = Color.rgb(0,0,0,.25);
-    private static final double SECTOR_BORDER_W = 1.1;
+    private static final Color METAL_LIGHT  = Color.web("#cfcfcf");
+    private static final Color METAL_DARK   = Color.web("#777777");
+    private static final Color FIRE_START   = Color.web("#ff5722");   // centre
+    private static final Color FIRE_END     = Color.web("#8b0000");   // bord
+    private static final Color HIGHLIGHT    = Color.web("#ff2200");   // glow gagnant
 
     private static final double GOLDEN_ANGLE    = 137.50776405003785;
 
@@ -43,7 +42,7 @@ public class Roue {
     /* ============================================================ */
     private static Color colorByIndex(int idx){
         double h = (idx * GOLDEN_ANGLE) % 360;
-        return Color.hsb(h, .85, .90);
+        return Color.hsb(h, .65, .9);
     }
 
     /* ============================================================ */
@@ -58,7 +57,7 @@ public class Roue {
     private String[] seatNames;
     private Color[]  seatColors;
 
-    private Polygon  cursor;
+    private SVGPath  spear;
     private ParallelTransition winFx;
     private Consumer<String>   spinCallback;
 
@@ -81,11 +80,15 @@ public class Roue {
         wheelGroup.setCacheHint(CacheHint.ROTATE);
         root.getChildren().add(wheelGroup);
 
-        cursor = new Polygon( 0,-(Main.WHEEL_RADIUS+10), -14,-(Main.WHEEL_RADIUS-6), 14,-(Main.WHEEL_RADIUS-6));
-        cursor.setFill(Color.WHITE);
-        cursor.setStroke(Color.web("#ec407a"));
-        cursor.setStrokeWidth(1.3);
-        root.getChildren().add(cursor);
+        SVGPath spear = new SVGPath();
+        spear.setContent("M0,-" + (Main.WHEEL_RADIUS + 18) + " L-8,-" +
+                (Main.WHEEL_RADIUS - 4) + " L0,-" + (Main.WHEEL_RADIUS - 14) +
+                " L8,-" + (Main.WHEEL_RADIUS - 4) + " Z");
+        spear.setFill(HIGHLIGHT);
+        spear.setStroke(Color.BLACK);
+        spear.setStrokeWidth(1.2);
+        root.getChildren().add(spear);
+        this.spear = spear;
 
         enableDrag();
     }
@@ -117,7 +120,6 @@ public class Roue {
             wheelGroup.getChildren().add(a);
             start += step;
         }
-        wheelGroup.getChildren().add(buildHub());
     }
 
     /* ============================================================ */
@@ -141,7 +143,13 @@ public class Roue {
         rot.setNode(wheelGroup);
         rot.setFromAngle(wheelGroup.getRotate());
         rot.setToAngle(wheelGroup.getRotate() + end);
-        rot.setInterpolator(Interpolator.EASE_OUT);
+        rot.setInterpolator(new Interpolator() {
+            @Override protected double curve(double t) {
+                double s = 1.70158;
+                t -= 1;
+                return (t*t*((s+1)*t + s) + 1);
+            }
+        });
         rot.setOnFinished(e -> {
             String malus = seatNames[idx];
             resultat.setMessage("Malus : " + malus);
@@ -152,78 +160,71 @@ public class Roue {
     }
 
     /* ============================================================ */
-    /* 8)  Effet gagnant : arc‑en‑ciel dynamique                    */
+    /* 8)  Effet gagnant  : halo incandescent                   */
     /* ============================================================ */
     private void highlightWinner(int idx){
         if(idx<0||idx>=arcs.size()) return;
         Arc a = arcs.get(idx);
 
-        /* --- Halo + épaisseur ------------------------------------ */
-        a.setStrokeWidth(SECTOR_BORDER_W*2);
-        Glow g = new Glow(.8); a.setEffect(g);
+        // Halo incandescent
+        Glow g = new Glow(1.0);
+        a.setEffect(g);
 
-        /* --- Pulsation ------------------------------------------- */
-        ScaleTransition pulse = new ScaleTransition(Duration.seconds(.55), a);
-        pulse.setFromX(1); pulse.setFromY(1);
-        pulse.setToX(1.14); pulse.setToY(1.14);
+        // Pulsation rouge vif
+        Timeline pulse = new Timeline(
+                new KeyFrame(Duration.ZERO,  new KeyValue(a.fillProperty(), HIGHLIGHT)),
+                new KeyFrame(Duration.seconds(.6), new KeyValue(a.fillProperty(), a.getFill()))
+        );
         pulse.setCycleCount(Animation.INDEFINITE);
         pulse.setAutoReverse(true);
 
-        /* --- Cycle arc‑en‑ciel (fill ET stroke) ------------------ */
-        Timeline rainbow = new Timeline();
-        double durationS = 1.2;              // durée d’un cycle complet
-        int    steps     = 12;               // résolution couleur
-        for(int i=0;i<=steps;i++){
-            double frac = (double)i/steps;
-            Color col = Color.hsb(frac*360,1,1);
-            rainbow.getKeyFrames().add(
-                    new KeyFrame(Duration.seconds(frac*durationS),
-                            new KeyValue(a.fillProperty(), col),
-                            new KeyValue(a.strokeProperty(), col))
-            );
-        }
-        rainbow.setCycleCount(Animation.INDEFINITE);
-
-        winFx = new ParallelTransition(pulse, rainbow);
-        winFx.setOnFinished(e-> clearHighlight());
+        winFx = new ParallelTransition(pulse);
         winFx.play();
     }
     private void clearHighlight(){
-        arcs.forEach(x->{ x.setEffect(null); x.setStroke(SECTOR_BORDER); x.setStrokeWidth(SECTOR_BORDER_W); });
+        arcs.forEach(x->{ x.setEffect(null); x.setStroke(METAL_LIGHT); x.setStrokeWidth(1.2); });
     }
 
     /* ============================================================ */
     /* 9)  Dessin : secteurs, anneaux, moyeu                        */
     /* ============================================================ */
     private void addDecorRings(){
-        Circle border = new Circle(Main.WHEEL_RADIUS+.6, Color.TRANSPARENT);
-        border.setStroke(Color.BLACK); border.setStrokeWidth(1.2);
+        // Large anneau métal sombre
+        Circle outer = new Circle(Main.WHEEL_RADIUS + 6, METAL_DARK);
+        outer.setStroke(METAL_LIGHT);
+        outer.setStrokeWidth(4);
 
-        Circle gold = new Circle(Main.WHEEL_RADIUS+4, Color.TRANSPARENT);
-        gold.setStroke(Color.web("#ffd54f")); gold.setStrokeWidth(6);
-
-        wheelGroup.getChildren().addAll(border, gold);
+        // Anneau rivets (petits cercles)
+        Group rivets = new Group();
+        int rivetCount = 32;
+        double r = Main.WHEEL_RADIUS + 6;
+        for (int i = 0; i < rivetCount; i++){
+            double ang = 2*Math.PI*i/rivetCount;
+            Circle c = new Circle(
+                    r*Math.cos(ang),
+                    r*Math.sin(ang),
+                    3, METAL_LIGHT
+            );
+            rivets.getChildren().add(c);
+        }
+        wheelGroup.getChildren().addAll(outer, rivets);
     }
-    private Arc buildSector(double start,double extent,Color base){
-        Arc arc = new Arc(0,0, Main.WHEEL_RADIUS, Main.WHEEL_RADIUS, start, extent);
-        arc.setType(ArcType.ROUND);
+    private Arc buildSector(double start, double extent, Color tint){
+        Arc a = new Arc(0,0, Main.WHEEL_RADIUS, Main.WHEEL_RADIUS, start, extent);
+        a.setType(ArcType.ROUND);
 
-        Paint p = new LinearGradient(0,0,1,1,true,CycleMethod.NO_CYCLE,
-                new Stop(0, base.brighter()),
-                new Stop(.45, base),
-                new Stop(1, base.darker()));
-
-        arc.setFill(p);
-        arc.setStroke(SECTOR_BORDER);
-        arc.setStrokeWidth(SECTOR_BORDER_W);
-        return arc;
-    }
-    private Circle buildHub(){
-        Circle c = new Circle(HUB_RADIUS,
-                new RadialGradient(0,0,.3,.3,1,true,CycleMethod.NO_CYCLE,
-                        new Stop(0, Color.web("#fffef9")), new Stop(1, Color.web("#e0c97f"))));
-        c.setStroke(HUB_STROKE); c.setStrokeWidth(HUB_STROKE_W);
-        return c;
+        // dégradé radial flammes
+        Paint fill = new RadialGradient(
+                0, 0,
+                0.0, 0.0, 1, true, CycleMethod.NO_CYCLE,
+                new Stop(0.00, FIRE_START.interpolate(tint, 0.25)),
+                new Stop(0.45, tint),
+                new Stop(1.00, FIRE_END)
+        );
+        a.setFill(fill);
+        a.setStroke(METAL_LIGHT);
+        a.setStrokeWidth(1.2);
+        return a;
     }
 
     /* ============================================================ */
