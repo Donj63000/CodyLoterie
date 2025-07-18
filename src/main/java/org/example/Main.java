@@ -173,7 +173,7 @@ public class Main extends Application {
 
         // === 6) Scène + Stage ===
         Scene scene = new Scene(root, SCENE_WIDTH, SCENE_HEIGHT);
-        primaryStage.setTitle("Loterie de la guilde EVOLUTION");
+        primaryStage.setTitle("Event PVP de la guilde EVOLUTION");
         primaryStage.setScene(scene);
 
         // -> Optionnel : enlever l'indication pour quitter le fullscreen
