@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.example.Historique;
 
 public class Main extends Application {
 
@@ -62,21 +61,15 @@ public class Main extends Application {
         leftBox.setPrefSize(420, 820);
         root.setLeft(leftBox);
 
-        // === 3) Gains (droite) ===
-        Gains gains = new Gains(users.getParticipants());
-        Historique historique = new Historique(gains);
-        VBox rightBox = new VBox(10, gains.getRootPane());
-        // Padding-top = 0 => ils sont “collés” sous le titre
+        // === 3) Zone droite (vide pour le moment) ===
+        VBox rightBox = new VBox();
         rightBox.setPadding(new Insets(0, 20, 10, 10));
         rightBox.setAlignment(Pos.TOP_CENTER);
-
-        // Agrandit la zone : 460 px large × 820 px haut
         rightBox.setPrefSize(460, 820);
         root.setRight(rightBox);
 
         // === 4) Roue au centre ===
         Roue roue = new Roue(resultat);
-        roue.setOnSpinFinished(pseudo -> historique.logResult(pseudo));
         StackPane centerPane = new StackPane(roue.getRootPane());
         centerPane.setAlignment(Pos.CENTER);
         centerPane.setMaxSize(WHEEL_RADIUS * 2 + 50, WHEEL_RADIUS * 2 + 50);
@@ -87,33 +80,19 @@ public class Main extends Application {
             Path f = Path.of("loterie-save.txt");
             if (Files.exists(f)) {
                 var lines = Files.readAllLines(f);
-                boolean objetsPart = false;
-                boolean bonusPart  = false;
                 for (String line : lines) {
                     if (line.startsWith("#")) {
-                        objetsPart = line.startsWith("#Objets");
-                        bonusPart  = line.startsWith("#Bonus");
                         continue;
                     }
-                    if (bonusPart) {
-                        try {
-                            gains.setExtraKamas(Integer.parseInt(line.trim()));
-                        } catch (NumberFormatException ignore) {
-                            gains.setExtraKamas(0);
-                        }
-                    } else if (objetsPart) {
-                        gains.getObjets().add(line);
-                    } else {
-                        String[] parts = line.split(";", 3);
-                        if (parts.length == 3) {
-                            users.getParticipants().add(
-                                    new Participant(
-                                            parts[0],
-                                            Integer.parseInt(parts[1]),
-                                            parts[2]
-                                    )
-                            );
-                        }
+                    String[] parts = line.split(";", 3);
+                    if (parts.length == 3) {
+                        users.getParticipants().add(
+                                new Participant(
+                                        parts[0],
+                                        Integer.parseInt(parts[1]),
+                                        parts[2]
+                                )
+                        );
                     }
                 }
             }
@@ -152,9 +131,7 @@ public class Main extends Application {
         Button saveButton = new Button("Sauvegarder état");
         saveButton.setOnAction(e -> {
             try {
-                Save.save(users.getParticipants(),
-                        gains.getObjets(),
-                        gains.getExtraKamas());
+                Save.save(users.getParticipants());
                 resultat.setMessage("État sauvegardé ✔");
             } catch (IOException ex) {
                 resultat.setMessage("Erreur de sauvegarde ✖");
@@ -164,15 +141,10 @@ public class Main extends Application {
 
         Button cleanButton = new Button("Nettoyer");
         cleanButton.setOnAction(e -> {
-            Save.reset(users.getParticipants(), gains.getObjets());
-            gains.setExtraKamas(0);
+            Save.reset(users.getParticipants());
             roue.updateWheelDisplay(users.getParticipantNames());
             resultat.setMessage("Nouvelle loterie prête");
         });
-
-        // Bouton Historique
-        Button historyButton = new Button("Historique");
-        historyButton.setOnAction(e -> historique.show());
 
         // === Nouveau bouton "Plein écran" ===
         Button fullScreenButton = new Button("Plein écran");
@@ -188,14 +160,12 @@ public class Main extends Application {
         Theme.styleButton(resetButton);
         Theme.styleButton(saveButton);
         Theme.styleButton(cleanButton);
-        Theme.styleButton(historyButton);
         Theme.styleButton(fullScreenButton);
 
         HBox bottomBox = new HBox(30,
                 spinButton, optionsButton, resetButton,
                 saveButton, cleanButton,
-                fullScreenButton,
-                historyButton
+                fullScreenButton
         );
         bottomBox.setAlignment(Pos.CENTER);
         bottomBox.setPadding(new Insets(16, 0, 20, 0));
