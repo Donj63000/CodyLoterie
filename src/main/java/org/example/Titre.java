@@ -32,7 +32,7 @@ public class Titre {
 
     public Titre() {
         // ====== TEXTE ======
-        title = new Text("Grande Loterie de la guilde EVOLUTION");
+        title = new Text("L'EVENT PVP de la guilde EVOLUTION");
         title.setFont(Font.font("Poppins", FontWeight.EXTRA_BOLD, 34));
         title.setBoundsType(TextBoundsType.VISUAL);
         title.setCache(true);
