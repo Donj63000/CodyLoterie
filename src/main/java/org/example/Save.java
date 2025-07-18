@@ -20,9 +20,7 @@ public final class Save {
     private static final Path FILE = Path.of("loterie-save.txt");
 
     /* ---------- Sauvegarde ---------- */
-    public static void save(ObservableList<Participant> participants,
-                            ObservableList<String> objets,
-                            int extraKamas) throws IOException {
+    public static void save(ObservableList<Participant> participants) throws IOException {
 
         StringBuilder sb = new StringBuilder("#Participants\n");
         for (Participant p : participants) {
@@ -32,21 +30,13 @@ public final class Save {
                     .append(p.getDonation()).append('\n');
         }
 
-        sb.append("#Objets\n");
-        for (String o : objets) {
-            sb.append(o).append('\n');
-        }
-
-        sb.append("#Bonus\n");
-        sb.append(extraKamas).append('\n');
+        // Ancienne section Objets/Bons supprimée
 
         Files.writeString(FILE, sb.toString());
     }
 
     /* ---------- Nettoyage ---------- */
-    public static void reset(ObservableList<Participant> participants,
-                             ObservableList<String> objets) {
+    public static void reset(ObservableList<Participant> participants) {
         participants.clear();
-        objets.clear();
     }
 }
