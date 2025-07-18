@@ -21,7 +21,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
 /**
- * Roue de loterie – une couleur par ticket ; la case gagnante clignote
+ * Roue de loterie – une couleur par malus ; la case gagnante clignote
  * en arc‑en‑ciel grâce à un Timeline cyclique, avec pulsation + halo.
  */
 public class Roue {
@@ -100,8 +100,8 @@ public class Roue {
     /* ============================================================ */
     /* 6)  Construction                                             */
     /* ============================================================ */
-    public void updateWheelDisplay(ObservableList<String> tickets){
-        buildSeatArrays(tickets, OptionRoue.getLosingTickets());
+    public void updateWheelDisplay(ObservableList<String> malus){
+        buildSeatArrays(malus);
 
         wheelGroup.setRotate(0);
         rot.stop();
@@ -112,7 +112,7 @@ public class Roue {
 
         double step = 360d/ seatNames.length, start=0;
         for(int i=0;i<seatNames.length;i++){
-            Arc a = buildSector(start, step, seatColors[i], seatNames[i]==null);
+            Arc a = buildSector(start, step, seatColors[i]);
             arcs.add(a);
             wheelGroup.getChildren().add(a);
             start += step;
@@ -123,12 +123,15 @@ public class Roue {
     /* ============================================================ */
     /* 7)  Spin (2 signatures)                                      */
     /* ============================================================ */
-    public void spinTheWheel(ObservableList<String> t){ updateWheelDisplay(t); spinTheWheel(); }
+    public void spinTheWheel(ObservableList<String> malus){
+        updateWheelDisplay(malus);
+        spinTheWheel();
+    }
     public void spinTheWheel(){
         if(winFx!=null){ winFx.stop(); clearHighlight(); }
 
         int total = seatNames==null?0:seatNames.length;
-        if(total==0){ resultat.setMessage("Aucun ticket – impossible de lancer la roue."); return; }
+        if(total==0){ resultat.setMessage("Aucun malus – impossible de lancer la roue."); return; }
 
         int idx = ThreadLocalRandom.current().nextInt(total);
         double step = 360d/total;
@@ -140,9 +143,9 @@ public class Roue {
         rot.setToAngle(wheelGroup.getRotate() + end);
         rot.setInterpolator(Interpolator.EASE_OUT);
         rot.setOnFinished(e -> {
-            String pseudo = seatNames[idx];
-            resultat.setMessage(pseudo!=null ? pseudo+" a gagné !" : "Perdu !");
-            if(spinCallback!=null) spinCallback.accept(pseudo);
+            String malus = seatNames[idx];
+            resultat.setMessage("Malus : " + malus);
+            if(spinCallback!=null) spinCallback.accept(malus);
             highlightWinner(idx);
         });
         rot.play();
@@ -201,13 +204,11 @@ public class Roue {
 
         wheelGroup.getChildren().addAll(border, gold);
     }
-    private Arc buildSector(double start,double extent,Color base,boolean loser){
+    private Arc buildSector(double start,double extent,Color base){
         Arc arc = new Arc(0,0, Main.WHEEL_RADIUS, Main.WHEEL_RADIUS, start, extent);
         arc.setType(ArcType.ROUND);
 
-        Paint p = loser
-                ? Color.rgb(35,35,35)
-                : new LinearGradient(0,0,1,1,true,CycleMethod.NO_CYCLE,
+        Paint p = new LinearGradient(0,0,1,1,true,CycleMethod.NO_CYCLE,
                 new Stop(0, base.brighter()),
                 new Stop(.45, base),
                 new Stop(1, base.darker()));
@@ -226,26 +227,13 @@ public class Roue {
     }
 
     /* ============================================================ */
-    /* 10)  Données : distribution des tickets                      */
+    /* 10)  Données : distribution des malus                        */
     /* ============================================================ */
-    private void buildSeatArrays(ObservableList<String> tickets,int losers){
-        int P = tickets.size(), T = P + losers;
-        seatNames  = new String[T];
-        seatColors = new Color[T];
-
-        int colorIdx=0;
-        double step = (double)T / P, acc = 0;
-        for(int i=0;i<P;i++){
-            int idx = Math.min((int)Math.round(acc), T-1);
-            while(seatNames[idx]!=null) idx = (idx+1)%T;
-            seatNames[idx]  = tickets.get(i);
-            seatColors[idx] = colorByIndex(colorIdx++);
-            acc += step;
-        }
-        // perdants gris
-        for(int i=0;i<T;i++){
-            if(seatNames[i]==null) seatColors[i]= Color.rgb(30,30,30);
-        }
+    private void buildSeatArrays(ObservableList<String> malus){
+        int n = malus.size();
+        seatNames  = malus.toArray(new String[0]);
+        seatColors = new Color[n];
+        for (int i = 0; i < n; i++) seatColors[i] = colorByIndex(i);
     }
 
     /* ============================================================ */

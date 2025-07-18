@@ -10,14 +10,11 @@ import javafx.stage.Stage;
 
 /**
  * Fenêtre optionnelle pour régler la configuration
- * de la roue (ex. nombre de tickets perdants, durée de rotation, etc.).
+ * de la roue (durée de rotation).
  */
 public class OptionRoue extends Stage {
 
-    // Variable statique : nombre de tickets perdants (100 par défaut).
-    private static int losingTickets = 100;
-
-    // Nouvelle variable statique : durée de rotation (3.0 s par défaut)
+    // Durée de rotation (3.0 s par défaut)
     private static double spinDuration = 3.0;
 
     public OptionRoue() {
@@ -27,10 +24,6 @@ public class OptionRoue extends Stage {
         root.setSpacing(10);
         root.setPadding(new Insets(10));
 
-        // Champ pour le nombre de tickets perdants
-        Label lblTickets = new Label("Nombre de tickets perdants :");
-        TextField txtTickets = new TextField(String.valueOf(losingTickets));
-
         // Champ pour la durée de rotation
         Label lblDuration = new Label("Durée de rotation (secondes) :");
         TextField txtDuration = new TextField(String.valueOf(spinDuration));
@@ -39,12 +32,6 @@ public class OptionRoue extends Stage {
         Button btnSave = new Button("Enregistrer");
         btnSave.setOnAction(e -> {
             try {
-                // Lecture du nombre de tickets perdants
-                int val = Integer.parseInt(txtTickets.getText().trim());
-                if (val >= 0) {
-                    losingTickets = val;
-                }
-
                 // Lecture de la durée de rotation
                 double dur = Double.parseDouble(txtDuration.getText().trim());
                 if (dur > 0) {
@@ -62,15 +49,10 @@ public class OptionRoue extends Stage {
         // Style Material sur le bouton
         Theme.styleButton(btnSave);
 
-        root.getChildren().addAll(lblTickets, txtTickets, lblDuration, txtDuration, btnSave);
+        root.getChildren().addAll(lblDuration, txtDuration, btnSave);
 
-        Scene scene = new Scene(root, 300, 160);
+        Scene scene = new Scene(root, 300, 120);
         setScene(scene);
-    }
-
-    // Méthode statique pour récupérer la config du nombre de tickets perdants
-    public static int getLosingTickets() {
-        return losingTickets;
     }
 
     // Méthode statique pour récupérer la config de la durée de rotation (en secondes)
