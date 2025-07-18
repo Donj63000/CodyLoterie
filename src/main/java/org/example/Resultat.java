@@ -53,14 +53,10 @@ public class Resultat {
         lastMessage = msg;
         label.setText("Résultat : " + msg);
 
-        // icône & teinte dynamiques
-        boolean win  = msg.toLowerCase().contains("gagn");
-        boolean lose = msg.toLowerCase().contains("perdu");
-
-        icon .setText(win ? "🏆" : lose ? "💔" : "🎲");
-        label.setFill(win ? Color.web("#ffeaea")    // rose très pâle
-                : lose ? Color.web("#ffd6d6")
-                : Color.WHITE);
+        // icône & teinte fixes (toujours un malus)
+        boolean win = true;
+        icon.setText("☠");
+        label.setFill(Color.WHITE);
 
         // petit rebond d'apparition
         root.setScaleX(.88); root.setScaleY(.88);

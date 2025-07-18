@@ -2,6 +2,8 @@ package org.example;
 
 import javafx.application.Application;
 import javafx.collections.ListChangeListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -68,12 +70,31 @@ public class Main extends Application {
         rightBox.setPrefSize(460, 820);
         root.setRight(rightBox);
 
+        // --- Liste des malus ---
+        ObservableList<String> malusList = FXCollections.observableArrayList(
+                "Tu boites sévère (–2\u202FPM)",
+                "Enragé (fin de tour au corps-à-corps)",
+                "Trop peureux (\u2265\u202F6\u202FPO)",
+                "Panoplie imposée",
+                "Sorcier myope (\u2264\u202F3\u202FPO)",
+                "Narcoleptique (skip 1 tour tous les 3 tours)",
+                "Écho étrange (1 sort/tour, toujours différent)",
+                "Oubli du familier",
+                "Aucun sort élémentaire (seulement neutres ou utilitaires)"
+        );
+
+        MalusPane malusPane = new MalusPane(malusList);
+        rightBox.getChildren().add(malusPane.getRootPane());
+
         // === 4) Roue au centre ===
         Roue roue = new Roue(resultat);
         StackPane centerPane = new StackPane(roue.getRootPane());
         centerPane.setAlignment(Pos.CENTER);
         centerPane.setMaxSize(WHEEL_RADIUS * 2 + 50, WHEEL_RADIUS * 2 + 50);
         root.setCenter(centerPane);
+
+        malusList.addListener((ListChangeListener<String>) c ->
+                roue.updateWheelDisplay(malusList));
 
         // Recharge la sauvegarde, s’il y en a une
         try {
@@ -101,12 +122,12 @@ public class Main extends Application {
         }
 
         // Mise à jour initiale de la roue
-        roue.updateWheelDisplay(users.getParticipantNames());
+        roue.updateWheelDisplay(malusList);
 
         // Surveille les changements sur la liste de participants
         users.getParticipants().addListener(
                 (ListChangeListener<Participant>) change -> {
-                    roue.updateWheelDisplay(users.getParticipantNames());
+                    roue.updateWheelDisplay(malusList);
                 }
         );
 
@@ -114,15 +135,15 @@ public class Main extends Application {
         Button spinButton = new Button("Lancer la roue !");
         spinButton.setFont(Font.font("Arial", 16));
         spinButton.setOnAction(e -> {
-            roue.updateWheelDisplay(users.getParticipantNames());
-            roue.spinTheWheel(users.getParticipantNames());
+            roue.updateWheelDisplay(malusList);
+            roue.spinTheWheel(malusList);
         });
 
         Button optionsButton = new Button("Options...");
         optionsButton.setOnAction(e -> {
             OptionRoue optWin = new OptionRoue();
             optWin.showAndWait();
-            roue.updateWheelDisplay(users.getParticipantNames());
+            roue.updateWheelDisplay(malusList);
         });
 
         Button resetButton = new Button("Reset Position");
@@ -142,7 +163,7 @@ public class Main extends Application {
         Button cleanButton = new Button("Nettoyer");
         cleanButton.setOnAction(e -> {
             Save.reset(users.getParticipants());
-            roue.updateWheelDisplay(users.getParticipantNames());
+            roue.updateWheelDisplay(malusList);
             resultat.setMessage("Nouvelle loterie prête");
         });
 
