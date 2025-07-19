@@ -12,6 +12,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,6 +55,11 @@ public class Main extends Application {
 
         // === 2) Participants (gauche) ===
         Users users = new Users();
+
+        // Instancie la fenêtre des gains pour l'historique
+        Gains gains = new Gains(users.getParticipants());
+        Historique historique = new Historique(gains);
+
         VBox leftBox = new VBox(10, users.getRootPane());
         // On supprime le padding-top
         leftBox.setPadding(new Insets(0, 10, 10, 20));
@@ -88,6 +94,7 @@ public class Main extends Application {
 
         // === 4) Roue au centre ===
         Roue roue = new Roue(resultat);
+        roue.setOnSpinFinished(historique::logResult);
         StackPane centerPane = new StackPane(roue.getRootPane());
         centerPane.setAlignment(Pos.CENTER);
         centerPane.setMaxSize(WHEEL_RADIUS * 2 + 50, WHEEL_RADIUS * 2 + 50);
@@ -135,7 +142,6 @@ public class Main extends Application {
         Button spinButton = new Button("Lancer la roue !");
         spinButton.setFont(Font.font("Arial", 16));
         spinButton.setOnAction(e -> {
-            roue.updateWheelDisplay(malusList);
             roue.spinTheWheel(malusList);
         });
 
@@ -175,6 +181,10 @@ public class Main extends Application {
             primaryStage.setFullScreen(!current);
         });
 
+        // Bouton pour afficher l'historique
+        Button historyButton = new Button("Historique...");
+        historyButton.setOnAction(e -> historique.show());
+
         // Style
         Theme.styleButton(spinButton);
         Theme.styleButton(optionsButton);
@@ -182,11 +192,12 @@ public class Main extends Application {
         Theme.styleButton(saveButton);
         Theme.styleButton(cleanButton);
         Theme.styleButton(fullScreenButton);
+        Theme.styleButton(historyButton);
 
         HBox bottomBox = new HBox(30,
                 spinButton, optionsButton, resetButton,
                 saveButton, cleanButton,
-                fullScreenButton
+                fullScreenButton, historyButton
         );
         bottomBox.setAlignment(Pos.CENTER);
         bottomBox.setPadding(new Insets(16, 0, 20, 0));

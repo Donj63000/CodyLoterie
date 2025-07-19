@@ -51,6 +51,19 @@ public class Users {
         colLevel .setCellFactory(c -> new TextFieldTableCell<>(new IntegerStringConverter()));
         colClasse.setCellFactory(TextFieldTableCell.forTableColumn());
 
+        colNom.setOnEditCommit(e -> {
+            Participant p = e.getRowValue();
+            p.setName(e.getNewValue());
+        });
+        colLevel.setOnEditCommit(e -> {
+            Participant p = e.getRowValue();
+            p.setLevel(e.getNewValue());
+        });
+        colClasse.setOnEditCommit(e -> {
+            Participant p = e.getRowValue();
+            p.setClasse(e.getNewValue());
+        });
+
         table.getColumns().addAll(colNom, colLevel, colClasse);
         table.setEditable(true);
         table.setPrefHeight(600);
