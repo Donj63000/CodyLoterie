@@ -1,6 +1,7 @@
 org\example\Theme.class
 org\example\Historique.class
 org\example\Gains.class
+org\example\Titre.class
 org\example\Gains$1.class
 org\example\OptionRoue.class
 org\example\Participant.class
@@ -11,3 +12,5 @@ org\example\Save.class
 org\example\Resultat.class
 org\example\Users.class
 org\example\Launcher.class
+org\example\Roue$1.class
+org\example\Roue.class
