@@ -37,6 +37,8 @@ public class Roue {
     private static final Color FIRE_END     = Color.web("#8b0000");   // bord
     private static final Color HIGHLIGHT    = Color.web("#ff2200");   // glow gagnant
 
+    private static final String BASE_FILL_KEY = "baseFill";
+
     private static final double GOLDEN_ANGLE    = 137.50776405003785;
 
     /* ============================================================ */
@@ -194,14 +196,15 @@ public class Roue {
         if(idx<0||idx>=arcs.size()) return;
         Arc a = arcs.get(idx);
 
+        Paint basePaint = (Paint) a.getProperties().get(BASE_FILL_KEY);
+
         // Halo incandescent
-        Glow g = new Glow(1.0);
-        a.setEffect(g);
+        a.setEffect(new Glow(1.0));
 
         // Pulsation rouge vif
         Timeline pulse = new Timeline(
-                new KeyFrame(Duration.ZERO,  new KeyValue(a.fillProperty(), HIGHLIGHT)),
-                new KeyFrame(Duration.seconds(.6), new KeyValue(a.fillProperty(), a.getFill()))
+                new KeyFrame(Duration.ZERO,      new KeyValue(a.fillProperty(), HIGHLIGHT)),
+                new KeyFrame(Duration.seconds(.6),new KeyValue(a.fillProperty(), basePaint))
         );
         pulse.setCycleCount(Animation.INDEFINITE);
         pulse.setAutoReverse(true);
@@ -210,7 +213,14 @@ public class Roue {
         winFx.play();
     }
     private void clearHighlight(){
-        arcs.forEach(x->{ x.setEffect(null); x.setStroke(METAL_LIGHT); x.setStrokeWidth(1.2); });
+        for (Arc a : arcs) {
+            a.setEffect(null);
+            a.setStroke(METAL_LIGHT);
+            a.setStrokeWidth(1.2);
+
+            Paint base = (Paint) a.getProperties().get(BASE_FILL_KEY);
+            if (base != null) a.setFill(base);
+        }
     }
 
     /* ============================================================ */
@@ -250,6 +260,7 @@ public class Roue {
                 new Stop(1.00, FIRE_END)
         );
         a.setFill(fill);
+        a.getProperties().put(BASE_FILL_KEY, fill);
         a.setStroke(METAL_LIGHT);
         a.setStrokeWidth(1.2);
         return a;
