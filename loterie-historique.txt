@@ -6,3 +6,8 @@
 2025-07-19 23:03:56 - Malus attribué : Trop peureux (≥ 6 PO)
 2025-07-19 23:04:00 - Malus attribué : Sorcier myope (≤ 3 PO)
 2025-07-19 23:10:23 - Malus attribué : Tu boites sévère (–2 PM)
+2025-07-20 01:22:43 - Malus attribué : Trop peureux (≥ 6 PO)
+2025-07-20 01:23:12 - Malus attribué : Narcoleptique (skip 1 tour tous les 3 tours)
+2025-07-20 01:23:18 - Malus attribué : Écho étrange (1 sort/tour, toujours différent)
+2025-07-20 01:23:27 - Malus attribué : Tu boites sévère (–2 PM)
+2025-07-20 01:23:32 - Malus attribué : Enragé (fin de tour au corps-à-corps)
