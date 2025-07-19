@@ -45,14 +45,22 @@ public class Gains {
 
         // ► Binding qui formate la cagnotte avec des espaces tous les 3 chiffres
         lblTotal.textProperty().bind(
-                Bindings.createStringBinding(() -> {
-                    int total = participants.stream().mapToInt(Participant::getLevel).sum()
-                            + extraKamas.get();
-                    // Mise en forme : ",d" produit "23,000,000" → on remplace ',' par ' '
-                    String formatted = String.format("%,d", total).replace(',', ' ');
-                    return "Cagnotte : " + formatted + " 𝚔";
-                }, participants, extraKamas)
+                Bindings.createStringBinding(() ->
+                                String.format("Cagnotte : %,d 𝚔",
+                                        participants.stream().mapToInt(Participant::getLevel).sum()
+                                                + extraKamas.get()).replace(',', ' '),
+                        participants, extraKamas
+                )
         );
+
+        participants.addListener((ListChangeListener<Participant>) c -> {
+            while (c.next()) {
+                if (c.wasAdded()) {
+                    c.getAddedSubList().forEach(p ->
+                            p.levelProperty().addListener((o, ov, nv) -> lblTotal.requestLayout()));
+                }
+            }
+        });
 
         // Bouton : ajoute le montant du champ à la cagnote
         Button btnAddKamas = new Button("Ajouter");

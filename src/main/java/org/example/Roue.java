@@ -1,7 +1,6 @@
 package org.example;
 
 import javafx.animation.*;
-import javafx.beans.property.DoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
@@ -58,6 +57,9 @@ public class Roue {
     private String[] seatNames;
     private Color[]  seatColors;
 
+    // Dernier hash de la liste de malus pour éviter les reconstructions inutiles
+    private int malusHash = 0;
+
     private SVGPath  spear;
     private ParallelTransition winFx;
     private Consumer<String>   spinCallback;
@@ -104,6 +106,11 @@ public class Roue {
     /* 6)  Construction                                             */
     /* ============================================================ */
     public void updateWheelDisplay(ObservableList<String> malus){
+        int newHash = malus.hashCode();
+        if (newHash == malusHash) {
+            return; // aucune modification de la liste
+        }
+        malusHash = newHash;
         buildSeatArrays(malus);
 
         wheelGroup.setRotate(0);
@@ -125,7 +132,9 @@ public class Roue {
     /* 7)  Spin (2 signatures)                                      */
     /* ============================================================ */
     public void spinTheWheel(ObservableList<String> malus){
-        updateWheelDisplay(malus);
+        if (malus.hashCode() != malusHash) {
+            updateWheelDisplay(malus);
+        }
         spinTheWheel();
     }
     public void spinTheWheel(){

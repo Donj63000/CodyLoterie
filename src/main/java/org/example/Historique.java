@@ -23,13 +23,11 @@ public class Historique extends Stage {
 
     private final ObservableList<String> lignes = FXCollections.observableArrayList();
     private final ListView<String> listView;
-    private final Gains gains;
     private static final Path FILE = Path.of("loterie-historique.txt");
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    public Historique(Gains gains) {
-        this.gains = gains;
+    public Historique() {
         setTitle("Historique des tirages");
 
         listView = new ListView<>(lignes);

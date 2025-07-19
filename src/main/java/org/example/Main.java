@@ -27,8 +27,6 @@ public class Main extends Application {
     // Rayon de la roue
     public static final double WHEEL_RADIUS  = 320;
 
-    // Durée du spin
-    public static final double SPIN_DURATION = 5.0; // en secondes
 
     @Override
     public void start(Stage primaryStage) {
@@ -58,7 +56,7 @@ public class Main extends Application {
 
         // Instancie la fenêtre des gains pour l'historique
         Gains gains = new Gains(users.getParticipants());
-        Historique historique = new Historique(gains);
+        Historique historique = new Historique();
 
         VBox leftBox = new VBox(10, users.getRootPane());
         // On supprime le padding-top
