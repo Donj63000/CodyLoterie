@@ -164,8 +164,10 @@ public class Gains {
     }
 
     public int getTotalKamas() {
-        // On récupère la valeur brute (sans espaces) via la regex
-        return Integer.parseInt(lblTotal.getText().replaceAll("[^0-9]", ""));
+        // Somme des niveaux des participants + bonus éventuel
+        return participants.stream()
+                .mapToInt(Participant::getLevel)
+                .sum() + extraKamas.get();
     }
 
     public ObservableList<String> getObjets() {
