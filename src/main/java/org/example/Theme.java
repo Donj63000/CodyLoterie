@@ -173,4 +173,11 @@ public class Theme {
         ));
         label.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.35)));
     }
+
+    /** Affiche une boîte d'erreur simple. */
+    public static void showError(String msg) {
+        Alert a = new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK);
+        a.setHeaderText(null);
+        a.showAndWait();
+    }
 }

@@ -1,44 +1,26 @@
 package org.example;
 
-/**
- * Simple classe de données décrivant un participant :
- * - Pseudo (name)
- * - Classe du personnage
- * - Niveau (level)
- */
+import javafx.beans.property.*;
+
 public class Participant {
-    private String name;
-    private int level;         // Niveau du joueur
-    private String classe;     // Classe du personnage
 
-    public Participant(String name, int level, String classe) {
-        this.name = name;
-        this.level = level;
-        this.classe = classe;
+    private final StringProperty  name   = new SimpleStringProperty();
+    private final IntegerProperty level  = new SimpleIntegerProperty();
+    private final StringProperty  classe = new SimpleStringProperty();
+
+    public Participant(String n, int l, String c) {
+        name.set(n); level.set(l); classe.set(c);
     }
 
-    /* ============== Getters et Setters ============== */
-    public String getName() {
-        return name;
-    }
+    public String getName()   { return name.get(); }
+    public int    getLevel()  { return level.get(); }
+    public String getClasse() { return classe.get(); }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public void setName(String v){ name.set(v); }
+    public void setLevel(int v){  level.set(v); }
+    public void setClasse(String v){ classe.set(v); }
 
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
-    }
-
-    public String getClasse() {
-        return classe;
-    }
-
-    public void setClasse(String classe) {
-        this.classe = classe;
-    }
+    public StringProperty  nameProperty()   { return name; }
+    public IntegerProperty levelProperty()  { return level; }
+    public StringProperty  classeProperty() { return classe; }
 }
