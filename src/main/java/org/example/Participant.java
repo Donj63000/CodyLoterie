@@ -7,7 +7,7 @@ package org.example;
  * - Niveau (level)
  */
 public class Participant {
-    private final String name;
+    private String name;
     private int level;         // Niveau du joueur
     private String classe;     // Classe du personnage
 
@@ -20,6 +20,10 @@ public class Participant {
     /* ============== Getters et Setters ============== */
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public int getLevel() {
