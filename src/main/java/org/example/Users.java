@@ -30,9 +30,9 @@ public class Users {
         TableColumn<Participant,Integer> colLevel = new TableColumn<>("Level");
         TableColumn<Participant,String>  colClasse= new TableColumn<>("Classe");
 
-        colNom   .setCellValueFactory(p -> new SimpleStringProperty (p.getValue().getName()));
-        colLevel .setCellValueFactory(p -> new SimpleIntegerProperty(p.getValue().getLevel()).asObject());
-        colClasse.setCellValueFactory(p -> new SimpleStringProperty (p.getValue().getClasse()));
+        colNom   .setCellValueFactory(p -> p.getValue().nameProperty());
+        colLevel .setCellValueFactory(p -> p.getValue().levelProperty().asObject());
+        colClasse.setCellValueFactory(p -> p.getValue().classeProperty());
 
         /* === Cellule colorée par INDEX de ligne ======================= */
         colNom.setCellFactory(column -> new TableCell<>() {
@@ -79,11 +79,18 @@ public class Users {
 
         add.setOnAction(e -> {
             String n = tNom.getText().trim();
-            if(!n.isEmpty()){
-                int lv = tLevel.getText().isBlank()?0:Integer.parseInt(tLevel.getText());
-                participants.add(new Participant(n,lv,tClasse.getText().trim()));
-                tNom.clear(); tLevel.clear(); tClasse.clear();
+            if (n.isEmpty()) return;
+
+            int lv;
+            try {
+                lv = Integer.parseInt(tLevel.getText().trim());
+            } catch (NumberFormatException ex) {
+                Theme.showError("Le level doit être un nombre entier.");
+                return;
             }
+
+            participants.add(new Participant(n, lv, tClasse.getText().trim()));
+            tNom.clear(); tLevel.clear(); tClasse.clear();
         });
         del.setOnAction(e -> {
             Participant sel = table.getSelectionModel().getSelectedItem();
