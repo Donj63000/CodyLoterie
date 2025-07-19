@@ -119,6 +119,11 @@
                 <version>${javafx.maven.plugin.version}</version>
                 <configuration>
                     <mainClass>org.example.Launcher</mainClass>
+                    <jvmArgs>
+                        -Dprism.order=es2
+                        -Dprism.vsync=true
+                        -Dprism.text=t2k
+                    </jvmArgs>
                 </configuration>
             </plugin>
 
