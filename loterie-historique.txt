@@ -1,3 +1,8 @@
 2025-07-18 01:38:42 - Perdu
 2025-07-18 01:38:47 - Perdu
 2025-07-18 01:41:29 - Perdu
+2025-07-19 23:03:43 - Malus attribué : Tu boites sévère (–2 PM)
+2025-07-19 23:03:51 - Malus attribué : Panoplie imposée
+2025-07-19 23:03:56 - Malus attribué : Trop peureux (≥ 6 PO)
+2025-07-19 23:04:00 - Malus attribué : Sorcier myope (≤ 3 PO)
+2025-07-19 23:10:23 - Malus attribué : Tu boites sévère (–2 PM)

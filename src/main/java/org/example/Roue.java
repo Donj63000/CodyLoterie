@@ -1,6 +1,7 @@
 package org.example;
 
 import javafx.animation.*;
+import javafx.beans.property.DoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
