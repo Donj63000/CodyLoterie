@@ -163,6 +163,11 @@ public class Roue {
     /* ============================================================ */
     /* 7)  Spin                                                     */
     /* ============================================================ */
+    public void spinTheWheel(ObservableList<String> malus){
+        updateWheelDisplay(malus);
+        spinTheWheel();
+    }
+
     public void spinTheWheel(){
 
         if (winFx != null) { winFx.stop(); clearHighlight(); }
