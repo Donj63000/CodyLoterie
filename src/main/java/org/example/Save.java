@@ -1,6 +1,8 @@
 package org.example;
 
 import javafx.collections.ObservableList;
+import org.example.bonus.Bonus;
+import org.example.Participant;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,10 +26,15 @@ public final class Save {
 
         StringBuilder sb = new StringBuilder("#Participants\n");
         for (Participant p : participants) {
-            // nom;level;classe
+            // nom;level;classe;bonus1|bonus2|...
             sb.append(p.getName()).append(';')
                     .append(p.getLevel()).append(';')
-                    .append(p.getClasse()).append('\n');
+                    .append(p.getClasse()).append(';');
+            String bonus = p.getBonusList().stream()
+                    .map(org.example.bonus.Bonus::description)
+                    .reduce((a,b)->a+"|"+b)
+                    .orElse("");
+            sb.append(bonus).append('\n');
         }
 
         // Ancienne section Objets/Bons supprimée

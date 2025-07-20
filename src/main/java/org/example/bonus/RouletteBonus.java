@@ -1,4 +1,4 @@
-package org.example;
+package org.example.bonus;
 
 import javafx.animation.*;
 import javafx.collections.ObservableList;
@@ -22,13 +22,18 @@ import javafx.util.Duration;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
+import org.example.Main;
+import org.example.OptionRoue;
+import org.example.Resultat;
+import org.example.Participant;
+import org.example.Theme;
 
 /**
- * Roue de loterie – une couleur par malus ; la case gagnante clignote
+ * Roue de bonus – une couleur par bonus ; la case gagnante clignote
  * en arc‑en‑ciel grâce à un Timeline cyclique, avec pulsation + halo.
  */
-public class Roue {
+public class RouletteBonus {
 
     /* ============================================================ */
     /* 1)  Paramètres visuels                                       */
@@ -36,9 +41,9 @@ public class Roue {
 
     private static final Color METAL_LIGHT  = Color.web("#cfcfcf");
     private static final Color METAL_DARK   = Color.web("#777777");
-    private static final Color FIRE_START   = Color.web("#ff5722");   // centre
-    private static final Color FIRE_END     = Color.web("#8b0000");   // bord
-    private static final Color HIGHLIGHT    = Color.web("#ff2200");   // glow gagnant
+    private static final Color FIRE_START   = Color.web("#00c6ff");   // centre
+    private static final Color FIRE_END     = Color.web("#0072ff");   // bord
+    private static final Color HIGHLIGHT    = Color.web("#00ffea");   // glow gagnant
 
     private static final String BASE_FILL_KEY = "baseFill";
 
@@ -64,13 +69,14 @@ public class Roue {
     private String[] seatNames;
     private Color[]  seatColors;
 
-    // Dernier hash de la liste de malus pour éviter les reconstructions inutiles
-    private int malusHash = 0;
+    // Dernier hash de la liste de bonus pour éviter les reconstructions inutiles
+    private int bonusHash = 0;
 
     private SVGPath  spear;
     private ParallelTransition winFx;
     private RotateTransition   spinRT;
-    private Consumer<String>   spinCallback;
+    private BiConsumer<Participant,String> bonusCallback;
+    private Participant currentPlayer;
 
     // drag
     private double dragX, dragY;
@@ -113,21 +119,21 @@ public class Roue {
     /* ============================================================ */
     public Node getRootPane(){ return root; }
     public void resetPosition(){ root.setTranslateX(0); root.setTranslateY(0); }
-    public void setOnSpinFinished(Consumer<String> cb){ spinCallback = cb; }
+    public void setOnBonusWon(BiConsumer<Participant,String> cb){ bonusCallback = cb; }
 
     /* ============================================================ */
     /* 6)  Construction                                             */
     /* ============================================================ */
-    public void updateWheelDisplay(ObservableList<String> malus){
-        if (malus.isEmpty()) {
+    public void updateWheelDisplay(ObservableList<Bonus> bonus){
+        if (bonus.isEmpty()) {
             wheelGroup.getChildren().clear();
             arcs.clear();
             seatNames = new String[0];
             return;
         }
-        int newHash = malus.hashCode();
-        malusHash = newHash;
-        buildSeatArrays(malus);
+        int newHash = bonus.hashCode();
+        bonusHash = newHash;
+        buildSeatArrays(bonus);
 
         wheelGroup.setRotate(0);
         wheelGroup.getChildren().clear();
@@ -163,8 +169,9 @@ public class Roue {
     /* ============================================================ */
     /* 7)  Spin                                                     */
     /* ============================================================ */
-    public void spinTheWheel(ObservableList<String> malus){
-        updateWheelDisplay(malus);
+    public void spinTheWheel(ObservableList<Bonus> bonus, Participant p){
+        currentPlayer = p;
+        updateWheelDisplay(bonus);
         spinTheWheel();
     }
 
@@ -173,7 +180,7 @@ public class Roue {
         if (winFx != null) { winFx.stop(); clearHighlight(); }
 
         if (seatNames.length == 0) {
-            resultat.setMessage("Aucun malus – impossible de lancer la roue.");
+            resultat.setMessage("Aucun bonus – impossible de lancer la roue.");
             return;
         }
 
@@ -207,8 +214,8 @@ public class Roue {
             wheelGroup.setVisible(true);
 
             String m = seatNames[idx];
-            resultat.setMessage("Malus : " + m);
-            if (spinCallback!=null) spinCallback.accept(m);
+            resultat.setMessage("Bonus : " + m);
+            if (bonusCallback!=null && currentPlayer!=null) bonusCallback.accept(currentPlayer, m);
             highlightWinner(idx);
         });
         spinRT.playFromStart();
@@ -292,11 +299,11 @@ public class Roue {
     }
 
     /* ============================================================ */
-    /* 10)  Données : distribution des malus                        */
+    /* 10)  Données : distribution des bonus                        */
     /* ============================================================ */
-    private void buildSeatArrays(ObservableList<String> malus){
-        int n = malus.size();
-        seatNames  = malus.toArray(new String[0]);
+    private void buildSeatArrays(ObservableList<Bonus> bonus){
+        int n = bonus.size();
+        seatNames  = bonus.stream().map(Bonus::description).toArray(String[]::new);
         seatColors = new Color[n];
         for (int i = 0; i < n; i++) seatColors[i] = colorByIndex(i);
     }
