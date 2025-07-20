@@ -1,7 +1,6 @@
 package org.example;
 
 import javafx.animation.*;
-import javafx.beans.property.DoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
@@ -66,6 +65,7 @@ public class Roue {
     private SVGPath  spear;
     private ParallelTransition winFx;
     private Consumer<String>   spinCallback;
+    private List<String> lastMalus = List.of();
 
     // drag
     private double dragX, dragY;
@@ -85,7 +85,7 @@ public class Roue {
         wheelGroup.setCacheHint(CacheHint.ROTATE);
         root.getChildren().add(wheelGroup);
 
-        SVGPath spear = new SVGPath();
+        spear = new SVGPath();
         spear.setContent("M0,-" + (Main.WHEEL_RADIUS + 18) + " L-8,-" +
                 (Main.WHEEL_RADIUS - 4) + " L0,-" + (Main.WHEEL_RADIUS - 14) +
                 " L8,-" + (Main.WHEEL_RADIUS - 4) + " Z");
@@ -93,7 +93,6 @@ public class Roue {
         spear.setStroke(Color.BLACK);
         spear.setStrokeWidth(1.2);
         root.getChildren().add(spear);
-        this.spear = spear;
 
         enableDrag();
     }
@@ -109,6 +108,12 @@ public class Roue {
     /* 6)  Construction                                             */
     /* ============================================================ */
     public void updateWheelDisplay(ObservableList<String> malus){
+        if (malus.isEmpty()) {
+            wheelGroup.getChildren().clear();
+            arcs.clear();
+            seatNames = new String[0];
+            return;
+        }
         int newHash = malus.hashCode();
         if (newHash == malusHash) {
             return; // aucune modification de la liste
@@ -132,15 +137,16 @@ public class Roue {
     }
 
     /* ============================================================ */
-    /* 7)  Spin (2 signatures)                                      */
+    /* 7)  Spin                                                     */
     /* ============================================================ */
     public void spinTheWheel(ObservableList<String> malus){
-        if (malus.hashCode() != malusHash) {
+        if (!malus.equals(lastMalus)) {
             updateWheelDisplay(malus);
+            lastMalus = List.copyOf(malus);
         }
-        spinTheWheel();
+        spin();
     }
-    public void spinTheWheel(){
+    private void spin(){
 
         if (winFx != null) { winFx.stop(); clearHighlight(); }
 
@@ -154,18 +160,19 @@ public class Roue {
         double target = idx * sector + sector / 2 - 90;
         double totalTurns = 6;                           // à ajuster
         double finalAngle = totalTurns * 360 + target;
+        double dur = OptionRoue.getSpinDuration();
 
         DoubleProperty angle = wheelGroup.rotateProperty();
 
         // 1) Accélération (0 → 720 ° en 10 % du temps, ease-in)
         KeyFrame kfStart = new KeyFrame(
-                Duration.seconds(OptionRoue.getSpinDuration() * .10),
+                Duration.seconds(dur * .10),
                 new KeyValue(angle, 720, Interpolator.SPLINE(0.42, 0.0, 1.0, 1.0))
         );
 
         // 2) Décélération (720 ° → finalAngle en 90 % du temps, ease-out)
         KeyFrame kfStop = new KeyFrame(
-                Duration.seconds(OptionRoue.getSpinDuration()),
+                Duration.seconds(dur),
                 new KeyValue(angle, finalAngle, Interpolator.SPLINE(0.0, 0.0, 0.58, 1.0))
         );
 
