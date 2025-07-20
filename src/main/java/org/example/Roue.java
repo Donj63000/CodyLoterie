@@ -1,7 +1,6 @@
 package org.example;
 
 import javafx.animation.*;
-import javafx.beans.property.DoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
@@ -9,6 +8,10 @@ import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.effect.Glow;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.transform.Scale;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.*;
 import javafx.scene.shape.Arc;
@@ -55,6 +58,7 @@ public class Roue {
     private final StackPane root;
     private final Group     wheelGroup;
     private final Resultat  resultat;
+    private final ImageView wheelImg = new ImageView();
     private final List<Arc> arcs = new ArrayList<>();
 
     private String[] seatNames;
@@ -65,8 +69,8 @@ public class Roue {
 
     private SVGPath  spear;
     private ParallelTransition winFx;
+    private RotateTransition   spinRT;
     private Consumer<String>   spinCallback;
-    private List<String> lastMalus = List.of();
 
     // drag
     private double dragX, dragY;
@@ -85,6 +89,12 @@ public class Roue {
         wheelGroup.setCache(true);
         wheelGroup.setCacheHint(CacheHint.ROTATE);
         root.getChildren().add(wheelGroup);
+
+        wheelImg.setSmooth(true);
+        wheelImg.setCache(true);
+        wheelImg.setCacheHint(CacheHint.ROTATE);
+        wheelImg.setVisible(false);
+        root.getChildren().add(wheelImg);
 
         spear = new SVGPath();
         spear.setContent("M0,-" + (Main.WHEEL_RADIUS + 18) + " L-8,-" +
@@ -116,9 +126,6 @@ public class Roue {
             return;
         }
         int newHash = malus.hashCode();
-        if (newHash == malusHash) {
-            return; // aucune modification de la liste
-        }
         malusHash = newHash;
         buildSeatArrays(malus);
 
@@ -135,19 +142,28 @@ public class Roue {
             wheelGroup.getChildren().add(a);
             start += step;
         }
+
+        refreshSnapshot();
+    }
+
+    /** capture wheelGroup -> wheelImg (appelé après chaque mise à jour) */
+    private void refreshSnapshot() {
+        wheelGroup.applyCss();
+        wheelGroup.layout();
+        SnapshotParameters sp = new SnapshotParameters();
+        sp.setFill(Color.TRANSPARENT);
+        sp.setTransform(new Scale(0.75, 0.75));
+        WritableImage img = wheelGroup.snapshot(sp, null);
+
+        wheelImg.setImage(img);
+        wheelImg.setFitWidth(img.getWidth());
+        wheelImg.setFitHeight(img.getHeight());
     }
 
     /* ============================================================ */
     /* 7)  Spin                                                     */
     /* ============================================================ */
-    public void spinTheWheel(ObservableList<String> malus){
-        if (!malus.equals(lastMalus)) {
-            updateWheelDisplay(malus);
-            lastMalus = List.copyOf(malus);
-        }
-        spin();
-    }
-    private void spin(){
+    public void spinTheWheel(){
 
         if (winFx != null) { winFx.stop(); clearHighlight(); }
 
@@ -156,45 +172,41 @@ public class Roue {
             return;
         }
 
+        /* ----- 1) prépare l’état visuel ----- */
+        wheelGroup.setVisible(false);
+        wheelImg.setRotate(0);
+        wheelImg.setVisible(true);
+        wheelImg.setEffect(null);
+
+        /* ----- 2) calcule la destination ----- */
         int idx = ThreadLocalRandom.current().nextInt(seatNames.length);
-        double sector = stepAngle();
-        double target = idx * sector + sector / 2 - 90;
-        double totalTurns = 6;                           // à ajuster
-        double finalAngle = totalTurns * 360 + target;
-        double dur = OptionRoue.getSpinDuration();
+        double sector = 360.0 / seatNames.length;
+        double target = idx * sector + sector/2 - 90;
+        double totalTurns = 6;
+        double finalAngle = totalTurns*360 + target;
 
-        DoubleProperty angle = wheelGroup.rotateProperty();
+        /* ----- 3) animation fluide ----- */
+        if (spinRT == null) {
+            spinRT = new RotateTransition(
+                    Duration.seconds(OptionRoue.getSpinDuration()), wheelImg);
+            spinRT.setInterpolator(Interpolator.EASE_OUT);
+            spinRT.setCycleCount(1);
+        }
+        spinRT.stop();
+        spinRT.setFromAngle(0);
+        spinRT.setToAngle(finalAngle);
+        spinRT.setOnFinished(e -> {
+            // remet l’angle dans la version vectorielle pour l’effet Glow
+            wheelGroup.setRotate(wheelImg.getRotate());
+            wheelImg.setVisible(false);
+            wheelGroup.setVisible(true);
 
-        // 1) Accélération (0 → 720 ° en 10 % du temps, ease-in)
-        KeyFrame kfStart = new KeyFrame(
-                Duration.seconds(dur * .10),
-                new KeyValue(angle, 720, Interpolator.SPLINE(0.42, 0.0, 1.0, 1.0))
-        );
-
-        // 2) Décélération (720 ° → finalAngle en 90 % du temps, ease-out)
-        KeyFrame kfStop = new KeyFrame(
-                Duration.seconds(dur),
-                new KeyValue(angle, finalAngle, Interpolator.SPLINE(0.0, 0.0, 0.58, 1.0))
-        );
-
-        Timeline spin = new Timeline(
-                new KeyFrame(Duration.ZERO,     new KeyValue(angle, 0)),
-                kfStart,
-                kfStop
-        );
-
-        spin.setOnFinished(e -> {
-            String malus = seatNames[idx];
-            resultat.setMessage("Malus : " + malus);
-            if (spinCallback != null) spinCallback.accept(malus);
+            String m = seatNames[idx];
+            resultat.setMessage("Malus : " + m);
+            if (spinCallback!=null) spinCallback.accept(m);
             highlightWinner(idx);
         });
-
-        spin.play();
-    }
-
-    private double stepAngle() {
-        return 360.0 / seatNames.length;
+        spinRT.playFromStart();
     }
 
     /* ============================================================ */

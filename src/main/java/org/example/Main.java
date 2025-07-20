@@ -140,7 +140,7 @@ public class Main extends Application {
         Button spinButton = new Button("Lancer la roue !");
         spinButton.setFont(Font.font("Arial", 16));
         spinButton.setOnAction(e -> {
-            roue.spinTheWheel();
+            roue.spinTheWheel(malusList);   // ← correct
         });
 
         Button optionsButton = new Button("Options...");
