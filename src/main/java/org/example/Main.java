@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import org.example.bonus.*;
 
 
 import java.io.IOException;
@@ -90,6 +91,9 @@ public class Main extends Application {
         MalusPane malusPane = new MalusPane(malusList);
         rightBox.getChildren().add(malusPane.getRootPane());
 
+        // --- Liste des bonus partagée ---
+        ObservableList<Bonus> bonusList = FXCollections.observableArrayList();
+
         // === 4) Roue au centre ===
         Roue roue = new Roue(resultat);
         roue.setOnSpinFinished(historique::logResult);
@@ -101,6 +105,8 @@ public class Main extends Application {
         malusList.addListener((ListChangeListener<String>) c ->
                 roue.updateWheelDisplay(malusList));
 
+        BonusDialog bonusDialog = new BonusDialog(bonusList, users.getParticipants(), historique);
+
         // Recharge la sauvegarde, s’il y en a une
         try {
             Path f = Path.of("loterie-save.txt");
@@ -110,15 +116,19 @@ public class Main extends Application {
                     if (line.startsWith("#")) {
                         continue;
                     }
-                    String[] parts = line.split(";", 3);
-                    if (parts.length == 3) {
-                        users.getParticipants().add(
-                                new Participant(
-                                        parts[0],
-                                        Integer.parseInt(parts[1]),
-                                        parts[2]
-                                )
+                    String[] parts = line.split(";", 4);
+                    if (parts.length >= 3) {
+                        Participant p = new Participant(
+                                parts[0],
+                                Integer.parseInt(parts[1]),
+                                parts[2]
                         );
+                        if (parts.length == 4 && !parts[3].isEmpty()) {
+                            for (String b : parts[3].split("\\|")) {
+                                p.addBonus(new org.example.bonus.Bonus(b));
+                            }
+                        }
+                        users.getParticipants().add(p);
                     }
                 }
             }
@@ -171,6 +181,9 @@ public class Main extends Application {
             resultat.setMessage("Nouvelle loterie prête");
         });
 
+        Button bonusButton = new Button("Roulette Bonus");
+        bonusButton.setOnAction(e -> bonusDialog.showAndWait());
+
         // === Nouveau bouton "Plein écran" ===
         Button fullScreenButton = new Button("Plein écran");
         fullScreenButton.setOnAction(e -> {
@@ -191,11 +204,12 @@ public class Main extends Application {
         Theme.styleButton(cleanButton);
         Theme.styleButton(fullScreenButton);
         Theme.styleButton(historyButton);
+        Theme.styleButton(bonusButton);
 
         HBox bottomBox = new HBox(30,
                 spinButton, optionsButton, resetButton,
                 saveButton, cleanButton,
-                fullScreenButton, historyButton
+                fullScreenButton, bonusButton, historyButton
         );
         bottomBox.setAlignment(Pos.CENTER);
         bottomBox.setPadding(new Insets(16, 0, 20, 0));
