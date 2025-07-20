@@ -64,8 +64,6 @@ public class Roue {
     private String[] seatNames;
     private Color[]  seatColors;
 
-    // Dernier hash de la liste de malus pour éviter les reconstructions inutiles
-    private int malusHash = 0;
 
     private SVGPath  spear;
     private ParallelTransition winFx;
@@ -125,8 +123,6 @@ public class Roue {
             seatNames = new String[0];
             return;
         }
-        int newHash = malus.hashCode();
-        malusHash = newHash;
         buildSeatArrays(malus);
 
         wheelGroup.setRotate(0);
