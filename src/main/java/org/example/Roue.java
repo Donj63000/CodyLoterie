@@ -11,6 +11,7 @@ import javafx.scene.effect.Glow;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.transform.Scale;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.*;
 import javafx.scene.shape.Arc;
@@ -68,6 +69,7 @@ public class Roue {
 
     private SVGPath  spear;
     private ParallelTransition winFx;
+    private RotateTransition   spinRT;
     private Consumer<String>   spinCallback;
 
     // drag
@@ -150,6 +152,7 @@ public class Roue {
         wheelGroup.layout();
         SnapshotParameters sp = new SnapshotParameters();
         sp.setFill(Color.TRANSPARENT);
+        sp.setTransform(new Scale(0.75, 0.75));
         WritableImage img = wheelGroup.snapshot(sp, null);
 
         wheelImg.setImage(img);
@@ -173,6 +176,7 @@ public class Roue {
         wheelGroup.setVisible(false);
         wheelImg.setRotate(0);
         wheelImg.setVisible(true);
+        wheelImg.setEffect(null);
 
         /* ----- 2) calcule la destination ----- */
         int idx = ThreadLocalRandom.current().nextInt(seatNames.length);
@@ -182,12 +186,16 @@ public class Roue {
         double finalAngle = totalTurns*360 + target;
 
         /* ----- 3) animation fluide ----- */
-        RotateTransition spin = new RotateTransition(
-                Duration.seconds(OptionRoue.getSpinDuration()), wheelImg);
-        spin.setFromAngle(0);
-        spin.setToAngle(finalAngle);
-        spin.setInterpolator(Interpolator.SPLINE(0.25,0.1,0.25,1));
-        spin.setOnFinished(e -> {
+        if (spinRT == null) {
+            spinRT = new RotateTransition(
+                    Duration.seconds(OptionRoue.getSpinDuration()), wheelImg);
+            spinRT.setInterpolator(Interpolator.EASE_OUT);
+            spinRT.setCycleCount(1);
+        }
+        spinRT.stop();
+        spinRT.setFromAngle(0);
+        spinRT.setToAngle(finalAngle);
+        spinRT.setOnFinished(e -> {
             // remet l’angle dans la version vectorielle pour l’effet Glow
             wheelGroup.setRotate(wheelImg.getRotate());
             wheelImg.setVisible(false);
@@ -198,7 +206,7 @@ public class Roue {
             if (spinCallback!=null) spinCallback.accept(m);
             highlightWinner(idx);
         });
-        spin.play();
+        spinRT.playFromStart();
     }
 
     /* ============================================================ */
