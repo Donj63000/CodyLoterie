@@ -12,6 +12,9 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import org.example.bonus.Bonus;
+import org.example.bonus.BonusDialog;
+
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -57,6 +60,13 @@ public class Main extends Application {
         // Instancie la fenêtre des gains pour l'historique
         Gains gains = new Gains(users.getParticipants());
         Historique historique = new Historique();
+
+        // liste partagée de tous les bonus disponibles
+        ObservableList<Bonus> bonusMasterList = FXCollections.observableArrayList(
+                new Bonus("Puissance +100"),
+                new Bonus("Dommages ×1,2"),
+                new Bonus("Initiative +500")
+        );
 
         VBox leftBox = new VBox(10, users.getRootPane());
         // On supprime le padding-top
@@ -110,15 +120,16 @@ public class Main extends Application {
                     if (line.startsWith("#")) {
                         continue;
                     }
-                    String[] parts = line.split(";", 3);
-                    if (parts.length == 3) {
-                        users.getParticipants().add(
-                                new Participant(
-                                        parts[0],
-                                        Integer.parseInt(parts[1]),
-                                        parts[2]
-                                )
-                        );
+                    String[] parts = line.split(";", -1);     // -1 : garde le champ vide
+                    if (parts.length >= 3) {
+                        Participant p = new Participant(parts[0],
+                                Integer.parseInt(parts[1]),
+                                parts[2]);
+                        if (parts.length == 4 && !parts[3].isBlank()) {
+                            for (String b : parts[3].split("\\|"))
+                                p.addBonus(new Bonus(b));
+                        }
+                        users.getParticipants().add(p);
                     }
                 }
             }
@@ -171,6 +182,14 @@ public class Main extends Application {
             resultat.setMessage("Nouvelle loterie prête");
         });
 
+        Button indivButton = new Button("Roulette individuelle");
+        Theme.styleButton(indivButton);
+        indivButton.setOnAction(e ->
+                new BonusDialog(bonusMasterList,
+                                users.getParticipants(),
+                                historique)
+                        .show());
+
         // === Nouveau bouton "Plein écran" ===
         Button fullScreenButton = new Button("Plein écran");
         fullScreenButton.setOnAction(e -> {
@@ -189,12 +208,13 @@ public class Main extends Application {
         Theme.styleButton(resetButton);
         Theme.styleButton(saveButton);
         Theme.styleButton(cleanButton);
+        Theme.styleButton(indivButton);
         Theme.styleButton(fullScreenButton);
         Theme.styleButton(historyButton);
 
         HBox bottomBox = new HBox(30,
                 spinButton, optionsButton, resetButton,
-                saveButton, cleanButton,
+                saveButton, cleanButton, indivButton,
                 fullScreenButton, historyButton
         );
         bottomBox.setAlignment(Pos.CENTER);
