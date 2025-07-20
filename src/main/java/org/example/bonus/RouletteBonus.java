@@ -84,7 +84,7 @@ public class RouletteBonus {
     /* ============================================================ */
     /* 4)  Constructeur                                             */
     /* ============================================================ */
-    public Roue(Resultat res){
+    public RouletteBonus(Resultat res){
         this.resultat = res;
 
         root = new StackPane();
