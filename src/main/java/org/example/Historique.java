@@ -9,6 +9,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+
+import org.example.Participant;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,6 +61,14 @@ public class Historique extends Stage {
         StringBuilder sb = new StringBuilder();
         sb.append(LocalDateTime.now().format(FORMATTER)).append(" - ");
         sb.append("Malus attribué : ").append(malusText);
+        lignes.add(sb.toString());
+    }
+
+    /** Ajoute une ligne pour un bonus gagné par un participant. */
+    public void logBonus(Participant p, String bonusText) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(LocalDateTime.now().format(FORMATTER)).append(" - ");
+        sb.append(p.getName()).append(" reçoit le bonus : ").append(bonusText);
         lignes.add(sb.toString());
     }
 
