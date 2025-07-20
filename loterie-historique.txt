@@ -19,3 +19,5 @@
 2025-07-20 01:33:21 - Malus attribué : Narcoleptique (skip 1 tour tous les 3 tours)
 2025-07-20 01:54:39 - Malus attribué : Oubli du familier
 2025-07-20 01:54:44 - Malus attribué : Oubli du familier
+2025-07-20 03:05:19 - Malus attribué : Narcoleptique (skip 1 tour tous les 3 tours)
+2025-07-20 03:05:25 - Malus attribué : Écho étrange (1 sort/tour, toujours différent)
