@@ -14,6 +14,7 @@ import javafx.stage.Stage;
 
 import org.example.bonus.Bonus;
 import org.example.bonus.BonusDialog;
+import org.example.wheel.MalusWheel;
 
 
 import java.io.IOException;
@@ -101,7 +102,7 @@ public class Main extends Application {
         rightBox.getChildren().add(malusPane.getRootPane());
 
         // === 4) Roue au centre ===
-        Roue roue = new Roue(resultat);
+        MalusWheel roue = new MalusWheel(resultat);
         roue.setOnSpinFinished(historique::logResult);
         StackPane centerPane = new StackPane(roue.getRootPane());
         centerPane.setAlignment(Pos.CENTER);

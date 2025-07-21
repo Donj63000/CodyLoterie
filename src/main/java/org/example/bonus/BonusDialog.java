@@ -15,6 +15,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import org.example.*;
+import org.example.wheel.BonusWheel;
 
 public class BonusDialog extends Stage {
 
@@ -25,7 +26,7 @@ public class BonusDialog extends Stage {
         initModality(Modality.APPLICATION_MODAL);
 
         Resultat result = new Resultat();
-        RouletteBonus wheel = new RouletteBonus(result);
+        BonusWheel wheel = new BonusWheel(result);
         BonusPane pane = new BonusPane(bonusList);
 
         ComboBox<Participant> combo = new ComboBox<>(players);
