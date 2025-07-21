@@ -77,6 +77,9 @@ public class BonusDialog extends Stage {
         root.setLeft(pane.getRootPane());
         root.setCenter(wheel.getRootPane());
 
+        // Arrière-plan identique à l'interface principale mais avec img_1.png
+        root.setBackground(Theme.makeBackgroundCover("/img_1.png"));
+
         VBox right = new VBox(10, playerBonus, remove);
         right.setAlignment(Pos.TOP_CENTER);
         right.setPadding(new Insets(10));
