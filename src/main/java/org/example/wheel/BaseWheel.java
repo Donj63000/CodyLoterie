@@ -92,6 +92,9 @@ public abstract class BaseWheel<T> {
             return;
         }
         int newHash = items.hashCode();
+        if (newHash == listHash && seatNames.length > 0) {
+            return;
+        }
         listHash = newHash;
         buildSeatArrays(items);
 
