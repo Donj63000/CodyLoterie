@@ -132,6 +132,9 @@ public class RouletteBonus {
             return;
         }
         int newHash = bonus.hashCode();
+        if (newHash == bonusHash && seatNames != null) {
+            return;
+        }
         bonusHash = newHash;
         buildSeatArrays(bonus);
 

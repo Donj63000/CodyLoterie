@@ -126,6 +126,9 @@ public class Roue {
             return;
         }
         int newHash = malus.hashCode();
+        if (newHash == malusHash && seatNames != null) {
+            return;
+        }
         malusHash = newHash;
         buildSeatArrays(malus);
 

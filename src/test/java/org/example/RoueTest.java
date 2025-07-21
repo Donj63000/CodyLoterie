@@ -38,4 +38,22 @@ public class RoueTest {
         List<?> arcs = (List<?>) arcsField.get(roue);
         assertEquals(3, arcs.size());
     }
+
+    @Test
+    public void testWheelUpdateSkipsWhenUnchanged() throws Exception {
+        Resultat resultat = new Resultat();
+        MalusWheel roue = new MalusWheel(resultat);
+        ObservableList<String> malus = FXCollections.observableArrayList("A", "B");
+
+        roue.updateWheelDisplay(malus);
+
+        Field seatNamesField = BaseWheel.class.getDeclaredField("seatNames");
+        seatNamesField.setAccessible(true);
+        Object before = seatNamesField.get(roue);
+
+        roue.updateWheelDisplay(malus);
+        Object after = seatNamesField.get(roue);
+
+        assertSame(before, after);
+    }
 }
