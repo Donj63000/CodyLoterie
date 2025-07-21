@@ -74,6 +74,7 @@ public class BonusDialog extends Stage {
         bottom.setPadding(new Insets(10));
 
         BorderPane root = new BorderPane();
+        root.setBackground(Theme.makeBackgroundCover("/img_2.png"));
         root.setLeft(pane.getRootPane());
         root.setCenter(wheel.getRootPane());
 
