@@ -29,9 +29,9 @@ public final class BonusDialog extends Stage {
         setTitle("Roulette Bonus");
         initModality(Modality.APPLICATION_MODAL);
 
-        Resultat resultat  = new Resultat();
-        BonusWheel wheel   = new BonusWheel(resultat);
-        BonusPane bonusUI  = new BonusPane(bonusList);
+        Resultat resultat = new Resultat();
+        BonusWheel wheel = new BonusWheel(resultat);
+        wheel.updateWheelDisplay(bonusList);
 
         ComboBox<Participant> combo = new ComboBox<>(players);
         combo.setPromptText("Joueur");
@@ -59,8 +59,7 @@ public final class BonusDialog extends Stage {
         });
 
         combo.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) ->
-                playerBonus.setItems(nv == null ? FXCollections.emptyObservableList() : nv.getBonusList())
-        );
+                playerBonus.setItems(nv == null ? FXCollections.emptyObservableList() : nv.getBonusList()));
 
         wheel.setOnBonusWon((p, b) -> {
             p.addBonus(new Bonus(b));
@@ -76,7 +75,7 @@ public final class BonusDialog extends Stage {
         right.setPadding(new Insets(10));
 
         BorderPane root = new BorderPane();
-        root.setLeft(bonusUI.getRootPane());
+        root.setLeft(new BonusPane(bonusList).getRootPane());
         root.setCenter(wheel.getRootPane());
         root.setRight(right);
         root.setTop(resultat.getNode());
