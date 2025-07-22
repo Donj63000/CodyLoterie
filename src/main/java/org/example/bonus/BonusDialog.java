@@ -1,7 +1,7 @@
 package org.example.bonus;
 
-import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -14,82 +14,76 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import org.example.*;
+import org.example.Historique;
+import org.example.Participant;
+import org.example.Resultat;
+import org.example.Theme;
 import org.example.wheel.BonusWheel;
 
-public class BonusDialog extends Stage {
+public final class BonusDialog extends Stage {
 
     public BonusDialog(ObservableList<Bonus> bonusList,
                        ObservableList<Participant> players,
                        Historique historique) {
+
         setTitle("Roulette Bonus");
         initModality(Modality.APPLICATION_MODAL);
 
-        Resultat result = new Resultat();
-        BonusWheel wheel = new BonusWheel(result);
-        BonusPane pane = new BonusPane(bonusList);
+        Resultat resultat  = new Resultat();
+        BonusWheel wheel   = new BonusWheel(resultat);
+        BonusPane bonusUI  = new BonusPane(bonusList);
 
         ComboBox<Participant> combo = new ComboBox<>(players);
         combo.setPromptText("Joueur");
         combo.setConverter(new StringConverter<>() {
-            @Override public String toString(Participant p){ return p==null?"":p.getName(); }
-            @Override public Participant fromString(String s){ return null; }
+            @Override public String toString(Participant p) { return p == null ? "" : p.getName(); }
+            @Override public Participant fromString(String s) { return null; }
         });
 
         Button spin = new Button("Lancer !");
         Theme.styleButton(spin);
-        spin.setOnAction(e -> {
-            Participant p = combo.getSelectionModel().getSelectedItem();
-            if (p == null) { Theme.showError("Choisir un joueur"); return; }
-            wheel.spinTheWheel(bonusList, p);
-        });
+        spin.disableProperty().bind(combo.getSelectionModel().selectedItemProperty().isNull());
+        spin.setOnAction(e -> wheel.spinTheWheel(bonusList, combo.getValue()));
 
-        // 1) list view des bonus du joueur
         ListView<Bonus> playerBonus = new ListView<>();
         Theme.styleListView(playerBonus);
         playerBonus.setPrefHeight(260);
 
-        // 2) bouton pour retirer le bonus sélectionné
         Button remove = new Button("Retirer");
         Theme.styleButton(remove);
-        remove.setOnAction(ev -> {
+        remove.disableProperty().bind(playerBonus.getSelectionModel().selectedItemProperty().isNull());
+        remove.setOnAction(e -> {
             Bonus b = playerBonus.getSelectionModel().getSelectedItem();
-            Participant p = combo.getSelectionModel().getSelectedItem();
-            if (b!=null && p!=null) p.removeBonus(b);
+            Participant p = combo.getValue();
+            if (b != null && p != null) p.removeBonus(b);
         });
 
-        // 3) chaque fois qu’on change de joueur -> montre ses bonus
-        combo.getSelectionModel().selectedItemProperty().addListener((obs, oldP, newP) -> {
-            playerBonus.setItems(newP==null? FXCollections.emptyObservableList()
-                                            : newP.getBonusList());
-        });
+        combo.getSelectionModel().selectedItemProperty().addListener((o, ov, nv) ->
+                playerBonus.setItems(nv == null ? FXCollections.emptyObservableList() : nv.getBonusList())
+        );
 
-        wheel.setOnBonusWon((p,b) -> {
+        wheel.setOnBonusWon((p, b) -> {
             p.addBonus(new Bonus(b));
-            historique.logBonus(p,b);
+            historique.logBonus(p, b);
         });
 
         HBox bottom = new HBox(10, combo, spin);
         bottom.setAlignment(Pos.CENTER);
         bottom.setPadding(new Insets(10));
 
-        BorderPane root = new BorderPane();
-        root.setLeft(pane.getRootPane());
-        root.setCenter(wheel.getRootPane());
-
-        // Arrière-plan identique à l'interface principale mais avec img_1.png
-        root.setBackground(Theme.makeBackgroundCover("/img_1.png"));
-
         VBox right = new VBox(10, playerBonus, remove);
         right.setAlignment(Pos.TOP_CENTER);
         right.setPadding(new Insets(10));
 
+        BorderPane root = new BorderPane();
+        root.setLeft(bonusUI.getRootPane());
+        root.setCenter(wheel.getRootPane());
         root.setRight(right);
-        root.setTop(result.getNode());
-        BorderPane.setAlignment(result.getNode(), Pos.CENTER);
+        root.setTop(resultat.getNode());
+        BorderPane.setAlignment(resultat.getNode(), Pos.CENTER);
         root.setBottom(bottom);
+        root.setBackground(Theme.makeBackgroundCover("/img_1.png"));
 
-        Scene scene = new Scene(root, 800, 600);
-        setScene(scene);
+        setScene(new Scene(root, 800, 600));
     }
 }

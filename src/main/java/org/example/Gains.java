@@ -1,6 +1,10 @@
 package org.example;
 
+import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.stream.Collectors;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -8,177 +12,112 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-public class Gains {
+public final class Gains {
 
-    // Données principales
+    private static final NumberFormat NF = NumberFormat.getIntegerInstance(Locale.FRANCE);
+
     private final ObservableList<Participant> participants;
-    private final ObservableList<String> objets;
-    private final SimpleIntegerProperty extraKamas;
+    private final ObservableList<String>      objets = FXCollections.observableArrayList();
+    private final IntegerProperty             extraKamas = new SimpleIntegerProperty();
 
-    // UI
-    private final TextField txtExtra;
-    private final Label lblTotal;
-    private final ListView<String> listView;
+    private final TextField txtExtra = new TextField("0");
+    private final Label     lblTotal = new Label();
+    private final ListView<String> listView = new ListView<>(objets);
 
     private final VBox root;
 
-    /** Constructeur */
     public Gains(ObservableList<Participant> participants) {
         this.participants = participants;
-        this.objets       = FXCollections.observableArrayList();
-        this.extraKamas   = new SimpleIntegerProperty(0);
 
-        /* ========== 1) CAGNOTTE ========== */
-        txtExtra = new TextField("0");
-        txtExtra.setPrefWidth(60);
-        txtExtra.setOnAction(e -> parseExtra());
-        txtExtra.focusedProperty().addListener((obs, oldVal, newVal) -> {
-            if (!newVal) parseExtra();
-        });
         Theme.styleTextField(txtExtra);
+        txtExtra.setPrefWidth(70);
+        txtExtra.setOnAction(e -> commitExtra());
+        txtExtra.focusedProperty().addListener((o, ov, nv) -> { if (!nv) commitExtra(); });
 
-        lblTotal = new Label();
         Theme.styleCapsuleLabel(lblTotal, "#4facfe", "#00f2fe");
-
-        // ► Binding qui formate la cagnotte avec des espaces tous les 3 chiffres
-        lblTotal.textProperty().bind(
-                Bindings.createStringBinding(() ->
-                                String.format("Cagnotte : %,d 𝚔",
-                                        participants.stream().mapToInt(Participant::getLevel).sum()
-                                                + extraKamas.get()).replace(',', ' '),
-                        participants, extraKamas
-                )
-        );
+        lblTotal.textProperty().bind(Bindings.createStringBinding(
+                () -> "Cagnotte : " +
+                        NF.format(participants.stream().mapToInt(Participant::getLevel).sum() + extraKamas.get()) +
+                        " 𝚔",
+                participants, extraKamas));
 
         participants.addListener((ListChangeListener<Participant>) c -> {
-            while (c.next()) {
-                if (c.wasAdded()) {
+            while (c.next())
+                if (c.wasAdded())
                     c.getAddedSubList().forEach(p ->
                             p.levelProperty().addListener((o, ov, nv) -> lblTotal.requestLayout()));
-                }
-            }
+            refreshObjets();
         });
 
-        // Bouton : ajoute le montant du champ à la cagnote
-        Button btnAddKamas = new Button("Ajouter");
-        Theme.styleButton(btnAddKamas);
-        btnAddKamas.setOnAction(e -> parseExtra());
+        Button btnAddKamas = makeButton("Ajouter", () -> commitExtra());
+        Button btnDelKamas = makeButton("Supprimer", () -> { extraKamas.set(0); txtExtra.setText("0"); });
 
-        // Bouton : supprime le montant complémentaire
-        Button btnRemoveKamas = new Button("Supprimer");
-        Theme.styleButton(btnRemoveKamas);
-        btnRemoveKamas.setOnAction(e -> {
-            extraKamas.set(0);
-            txtExtra.setText("0");
-        });
-
-        /* ========== 2) OBJETS ========== */
-        listView = new ListView<>(objets);
-        listView.setPrefSize(160, 300);
         Theme.styleListView(listView);
-
-        // Gros, vert
+        listView.setPrefSize(160, 300);
         listView.setCellFactory(lv -> new ListCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
+            @Override protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item);
-                    setStyle("-fx-font-size: 18px; -fx-text-fill: green;");
-                }
+                setText(empty ? null : item);
+                setStyle(empty ? "" : "-fx-font-size:18px;-fx-text-fill:green;");
             }
         });
 
-        // Saisie / ajout / suppression d'objets
         TextField txtNew = new TextField();
-        txtNew.setPromptText("Nouvel objet…");
         Theme.styleTextField(txtNew);
+        txtNew.setPromptText("Nouvel objet…");
 
-        Button btnAdd = new Button("Ajouter");
-        Theme.styleButton(btnAdd);
-        btnAdd.setOnAction(e -> {
+        Button btnAddObj = makeButton("Ajouter", () -> {
             String v = txtNew.getText().trim();
-            if (!v.isEmpty()) {
-                objets.add(v);
-                txtNew.clear();
-            }
+            if (!v.isEmpty()) { objets.add(v); txtNew.clear(); }
         });
-
-        Button btnDel = new Button("Supprimer");
-        Theme.styleButton(btnDel);
-        btnDel.setOnAction(e -> {
+        Button btnDelObj = makeButton("Supprimer", () -> {
             String sel = listView.getSelectionModel().getSelectedItem();
-            if (sel != null) {
-                objets.remove(sel);
-            }
+            if (sel != null) objets.remove(sel);
         });
+        txtNew.setOnKeyPressed(e -> { if (e.getCode() == KeyCode.ENTER) btnAddObj.fire(); });
 
         Label lblObjets = new Label("Objets :");
         Theme.styleCapsuleLabel(lblObjets, "#ff9a9e", "#fad0c4");
 
-        // Mise à jour auto depuis les participants
-        participants.addListener((ListChangeListener<Participant>) change -> refreshObjets());
+        VBox boxObjets = new VBox(6, lblObjets, listView, txtNew, btnAddObj, btnDelObj);
+        boxObjets.setPadding(new Insets(8, 0, 0, 0));
+
+        VBox boxKamas = new VBox(6, txtExtra, new HBox(10, btnAddKamas, btnDelKamas));
+
+        root = new VBox(10, lblTotal, boxKamas, new Separator(), boxObjets);
+        root.setPadding(new Insets(8));
         refreshObjets();
-
-        VBox objetsBox = new VBox(6, lblObjets, listView, txtNew, btnAdd, btnDel);
-        objetsBox.setPadding(new Insets(8, 0, 0, 0));
-
-        VBox vbKamas = new VBox(6,
-                txtExtra,
-                new HBox(10, btnAddKamas, btnRemoveKamas)
-        );
-
-        root = new VBox(10,
-                lblTotal,
-                vbKamas,
-                new Separator(),
-                objetsBox
-        );
     }
 
-    private void parseExtra() {
+    private Button makeButton(String text, Runnable action) {
+        Button b = new Button(text);
+        Theme.styleButton(b);
+        b.setOnAction(e -> action.run());
+        return b;
+    }
+
+    private void commitExtra() {
         try {
-            extraKamas.set(Integer.parseInt(txtExtra.getText().trim()));
-        } catch (NumberFormatException ex) {
+            extraKamas.set(Math.max(0, Integer.parseInt(txtExtra.getText().trim())));
+        } catch (NumberFormatException ignored) {
             txtExtra.setText(String.valueOf(extraKamas.get()));
         }
     }
 
     private void refreshObjets() {
-        objets.setAll(
-                participants.stream()
-                        .map(Participant::getClasse)
-                        .filter(s -> s != null && !s.isBlank() && !s.equals("-"))
-                        .toList()
-        );
+        objets.setAll(participants.stream()
+                .map(Participant::getClasse)
+                .filter(s -> s != null && !s.isBlank() && !"-".equals(s))
+                .collect(Collectors.toSet()));
     }
 
-    public Node getRootPane() {
-        return root;
-    }
-
-    public int getExtraKamas() {
-        return extraKamas.get();
-    }
-
-    public void setExtraKamas(int value) {
-        extraKamas.set(value);
-        txtExtra.setText(String.valueOf(value));
-    }
-
-    public int getTotalKamas() {
-        // Somme des niveaux des participants + bonus éventuel
-        return participants.stream()
-                .mapToInt(Participant::getLevel)
-                .sum() + extraKamas.get();
-    }
-
-    public ObservableList<String> getObjets() {
-        return objets;
-    }
+    public Node getRootPane()             { return root; }
+    public int  getExtraKamas()            { return extraKamas.get(); }
+    public void setExtraKamas(int value)   { extraKamas.set(value); txtExtra.setText(String.valueOf(value)); }
+    public int  getTotalKamas()            { return participants.stream().mapToInt(Participant::getLevel).sum() + extraKamas.get(); }
+    public ObservableList<String> getObjets() { return objets; }
 }

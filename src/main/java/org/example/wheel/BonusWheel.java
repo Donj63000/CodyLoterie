@@ -1,45 +1,42 @@
 package org.example.wheel;
 
+import java.util.function.BiConsumer;
 import javafx.collections.ObservableList;
 import javafx.scene.paint.Color;
-import java.util.function.BiConsumer;
-import org.example.Resultat;
 import org.example.Participant;
+import org.example.Resultat;
 import org.example.bonus.Bonus;
 
-public class BonusWheel extends BaseWheel<Bonus> {
-    private BiConsumer<Participant, String> bonusCallback;
+public final class BonusWheel extends BaseWheel<Bonus> {
+
+    private static final Color FIRE_START  = Color.web("#00c6ff");
+    private static final Color FIRE_END    = Color.web("#0072ff");
+    private static final Color HIGHLIGHT   = Color.web("#00ffea");
+    private static final String PREFIX     = "Bonus : ";
+
+    private BiConsumer<? super Participant, ? super String> callback;
     private Participant currentPlayer;
 
-    public BonusWheel(Resultat res) {
-        super(res);
+    public BonusWheel(Resultat resultat) {
+        super(resultat);
     }
 
-    public void setOnBonusWon(BiConsumer<Participant,String> cb) { bonusCallback = cb; }
-
-    public void spinTheWheel(ObservableList<Bonus> bonus, Participant p) {
-        currentPlayer = p;
-        super.spinTheWheel(bonus);
+    public void setOnBonusWon(BiConsumer<? super Participant, ? super String> cb) {
+        callback = cb;
     }
 
-    @Override
-    protected Color getFireStart() { return Color.web("#00c6ff"); }
+    public void spinTheWheel(ObservableList<Bonus> bonuses, Participant player) {
+        currentPlayer = player;
+        super.spinTheWheel(bonuses);
+    }
 
-    @Override
-    protected Color getFireEnd() { return Color.web("#0072ff"); }
+    @Override protected Color getFireStart()      { return FIRE_START; }
+    @Override protected Color getFireEnd()        { return FIRE_END; }
+    @Override protected Color getHighlightColor() { return HIGHLIGHT; }
+    @Override protected String prefix()           { return PREFIX; }
+    @Override protected String itemToString(Bonus b) { return b.description(); }
 
-    @Override
-    protected Color getHighlightColor() { return Color.web("#00ffea"); }
-
-    @Override
-    protected String prefix() { return "Bonus : "; }
-
-    @Override
-    protected String itemToString(Bonus item) { return item.description(); }
-
-    @Override
-    protected void onItemWon(String label) {
-        if (bonusCallback != null && currentPlayer != null)
-            bonusCallback.accept(currentPlayer, label);
+    @Override protected void onItemWon(String label) {
+        if (callback != null && currentPlayer != null) callback.accept(currentPlayer, label);
     }
 }

@@ -1,8 +1,8 @@
 package org.example;
 
 import javafx.application.Application;
-import javafx.collections.ListChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -11,82 +11,38 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-
 import org.example.bonus.Bonus;
 import org.example.bonus.BonusDialog;
 import org.example.wheel.MalusWheel;
-
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+public final class Main extends Application {
 
-public class Main extends Application {
-
-    // Dimensions de la fenêtre
-    public static final double SCENE_WIDTH   = 1200;
-    public static final double SCENE_HEIGHT  = 900;
-
-    // Rayon de la roue
-    public static final double WHEEL_RADIUS  = 320;
-
+    public static final double SCENE_WIDTH = 1200;
+    public static final double SCENE_HEIGHT = 900;
+    public static final double WHEEL_RADIUS = 320;
+    private static final Path SAVE_FILE = Path.of("loterie-save.txt");
 
     @Override
-    public void start(Stage primaryStage) {
-        // Root principal
+    public void start(Stage stage) {
         BorderPane root = new BorderPane();
-
-        // === 1) Titre + Résultat (en haut) ===
-        Titre bandeau = new Titre();
-        Resultat resultat = new Resultat();
-
-        // Rapprochés : spacing = 4 px
-        HBox topBox = new HBox(resultat.getNode());
-        topBox.setAlignment(Pos.CENTER);
-
-        VBox topContainer = new VBox(4,
-                bandeau.getNode(),
-                topBox
-        );
-        topContainer.setAlignment(Pos.TOP_LEFT);
-        root.setTop(topContainer);
-
-        // Image de fond
         root.setBackground(Theme.makeBackgroundCover("/img.png"));
 
-        // === 2) Participants (gauche) ===
+        Titre titre = new Titre();
+        Resultat resultat = new Resultat();
+        HBox top = new HBox(resultat.getNode());
+        top.setAlignment(Pos.CENTER);
+        root.setTop(new VBox(4, titre.getNode(), top));
+
         Users users = new Users();
+        VBox left = new VBox(10, users.getRootPane());
+        left.setPadding(new Insets(0, 10, 10, 20));
+        left.setPrefSize(420, 820);
+        root.setLeft(left);
 
-        // Instancie la fenêtre des gains pour l'historique
-        Gains gains = new Gains(users.getParticipants());
-        Historique historique = new Historique();
-
-        // liste partagée de tous les bonus disponibles
-        ObservableList<Bonus> bonusMasterList = FXCollections.observableArrayList(
-                new Bonus("Puissance +100"),
-                new Bonus("Dommages ×1,2"),
-                new Bonus("Initiative +500")
-        );
-
-        VBox leftBox = new VBox(10, users.getRootPane());
-        // On supprime le padding-top
-        leftBox.setPadding(new Insets(0, 10, 10, 20));
-        leftBox.setAlignment(Pos.TOP_CENTER);
-
-        // Agrandit la zone : 420 px large × 820 px haut
-        leftBox.setPrefSize(420, 820);
-        root.setLeft(leftBox);
-
-        // === 3) Zone droite (vide pour le moment) ===
-        VBox rightBox = new VBox();
-        rightBox.setPadding(new Insets(0, 20, 10, 10));
-        rightBox.setAlignment(Pos.TOP_CENTER);
-        rightBox.setPrefSize(460, 820);
-        root.setRight(rightBox);
-
-        // --- Liste des malus ---
-        ObservableList<String> malusList = FXCollections.observableArrayList(
+        ObservableList<String> malus = FXCollections.observableArrayList(
                 "Tu boites sévère (–2\u202FPM)",
                 "Enragé (fin de tour au corps-à-corps)",
                 "Trop peureux (\u2265\u202F6\u202FPO)",
@@ -97,140 +53,97 @@ public class Main extends Application {
                 "Oubli du familier",
                 "Aucun sort élémentaire (seulement neutres ou utilitaires)"
         );
+        MalusPane malusPane = new MalusPane(malus);
+        VBox right = new VBox(malusPane.getRootPane());
+        right.setPadding(new Insets(0, 20, 10, 10));
+        right.setPrefSize(460, 820);
+        root.setRight(right);
 
-        MalusPane malusPane = new MalusPane(malusList);
-        rightBox.getChildren().add(malusPane.getRootPane());
+        MalusWheel wheel = new MalusWheel(resultat);
+        Historique historique = new Historique();
+        wheel.setOnSpinFinished(historique::logResult);
+        StackPane center = new StackPane(wheel.getRootPane());
+        center.setAlignment(Pos.CENTER);
+        center.setMaxSize(WHEEL_RADIUS * 2 + 50, WHEEL_RADIUS * 2 + 50);
+        root.setCenter(center);
 
-        // === 4) Roue au centre ===
-        MalusWheel roue = new MalusWheel(resultat);
-        roue.setOnSpinFinished(historique::logResult);
-        StackPane centerPane = new StackPane(roue.getRootPane());
-        centerPane.setAlignment(Pos.CENTER);
-        centerPane.setMaxSize(WHEEL_RADIUS * 2 + 50, WHEEL_RADIUS * 2 + 50);
-        root.setCenter(centerPane);
+        malus.addListener((ListChangeListener<String>) c -> wheel.updateWheelDisplay(malus));
+        wheel.updateWheelDisplay(malus);
 
-        malusList.addListener((ListChangeListener<String>) c ->
-                roue.updateWheelDisplay(malusList));
-
-        // Recharge la sauvegarde, s’il y en a une
-        try {
-            Path f = Path.of("loterie-save.txt");
-            if (Files.exists(f)) {
-                var lines = Files.readAllLines(f);
-                for (String line : lines) {
-                    if (line.startsWith("#")) {
-                        continue;
-                    }
-                    String[] parts = line.split(";", -1);     // -1 : garde le champ vide
-                    if (parts.length >= 3) {
-                        Participant p = new Participant(parts[0],
-                                Integer.parseInt(parts[1]),
-                                parts[2]);
-                        if (parts.length == 4 && !parts[3].isBlank()) {
-                            for (String b : parts[3].split("\\|"))
-                                p.addBonus(new Bonus(b));
-                        }
-                        users.getParticipants().add(p);
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            System.err.println("Impossible de relire la sauvegarde : " + ex.getMessage());
-        }
-
-        // Mise à jour initiale de la roue
-        roue.updateWheelDisplay(malusList);
-
-        // Surveille les changements sur la liste de participants
-        users.getParticipants().addListener(
-                (ListChangeListener<Participant>) change -> {
-                    roue.updateWheelDisplay(malusList);
-                }
+        ObservableList<Bonus> bonusMaster = FXCollections.observableArrayList(
+                new Bonus("Puissance +100"),
+                new Bonus("Dommages ×1,2"),
+                new Bonus("Initiative +500")
         );
 
-        // === 5) Boutons en bas ===
-        Button spinButton = new Button("Lancer la roue !");
-        spinButton.setFont(Font.font("Arial", 16));
-        spinButton.setOnAction(e -> {
-            roue.spinTheWheel(malusList);   // ← correct
+        loadParticipants(users.getParticipants());
+
+        users.getParticipants().addListener(
+                (ListChangeListener<Participant>) c -> wheel.updateWheelDisplay(malus));
+
+        Button spin = makeButton("Lancer la roue !", () -> wheel.spinTheWheel(malus));
+        spin.setFont(Font.font("Arial", 16));
+
+        Button options = makeButton("Options...", () -> {
+            new OptionRoue().showAndWait();
+            wheel.updateWheelDisplay(malus);
         });
 
-        Button optionsButton = new Button("Options...");
-        optionsButton.setOnAction(e -> {
-            OptionRoue optWin = new OptionRoue();
-            optWin.showAndWait();
-            roue.updateWheelDisplay(malusList);
-        });
+        Button reset = makeButton("Reset Position", wheel::resetPosition);
 
-        Button resetButton = new Button("Reset Position");
-        resetButton.setOnAction(e -> roue.resetPosition());
-
-        Button saveButton = new Button("Sauvegarder état");
-        saveButton.setOnAction(e -> {
+        Button save = makeButton("Sauvegarder état", () -> {
             try {
                 Save.save(users.getParticipants());
                 resultat.setMessage("État sauvegardé ✔");
             } catch (IOException ex) {
                 resultat.setMessage("Erreur de sauvegarde ✖");
-                ex.printStackTrace();
             }
         });
 
-        Button cleanButton = new Button("Nettoyer");
-        cleanButton.setOnAction(e -> {
+        Button clean = makeButton("Nettoyer", () -> {
             Save.reset(users.getParticipants());
-            roue.updateWheelDisplay(malusList);
+            wheel.updateWheelDisplay(malus);
             resultat.setMessage("Nouvelle loterie prête");
         });
 
-        Button indivButton = new Button("Roulette individuelle");
-        Theme.styleButton(indivButton);
-        indivButton.setOnAction(e ->
-                new BonusDialog(bonusMasterList,
-                                users.getParticipants(),
-                                historique)
-                        .show());
+        Button indiv = makeButton("Roulette individuelle", () ->
+                new BonusDialog(bonusMaster, users.getParticipants(), historique).show());
 
-        // === Nouveau bouton "Plein écran" ===
-        Button fullScreenButton = new Button("Plein écran");
-        fullScreenButton.setOnAction(e -> {
-            // Bascule l'état "fullscreen" à chaque clic
-            boolean current = primaryStage.isFullScreen();
-            primaryStage.setFullScreen(!current);
-        });
+        Button fullScreen = makeButton("Plein écran", () -> stage.setFullScreen(!stage.isFullScreen()));
 
-        // Bouton pour afficher l'historique
-        Button historyButton = new Button("Historique...");
-        historyButton.setOnAction(e -> historique.show());
+        Button history = makeButton("Historique...", historique::show);
 
-        // Style
-        Theme.styleButton(spinButton);
-        Theme.styleButton(optionsButton);
-        Theme.styleButton(resetButton);
-        Theme.styleButton(saveButton);
-        Theme.styleButton(cleanButton);
-        Theme.styleButton(indivButton);
-        Theme.styleButton(fullScreenButton);
-        Theme.styleButton(historyButton);
+        HBox bottom = new HBox(30, spin, options, reset, save, clean, indiv, fullScreen, history);
+        bottom.setAlignment(Pos.CENTER);
+        bottom.setPadding(new Insets(16, 0, 20, 0));
+        root.setBottom(bottom);
 
-        HBox bottomBox = new HBox(30,
-                spinButton, optionsButton, resetButton,
-                saveButton, cleanButton, indivButton,
-                fullScreenButton, historyButton
-        );
-        bottomBox.setAlignment(Pos.CENTER);
-        bottomBox.setPadding(new Insets(16, 0, 20, 0));
-        root.setBottom(bottomBox);
+        stage.setScene(new Scene(root, SCENE_WIDTH, SCENE_HEIGHT));
+        stage.setTitle("Event PVP de la guilde EVOLUTION");
+        stage.show();
+    }
 
-        // === 6) Scène + Stage ===
-        Scene scene = new Scene(root, SCENE_WIDTH, SCENE_HEIGHT);
-        primaryStage.setTitle("Event PVP de la guilde EVOLUTION");
-        primaryStage.setScene(scene);
+    private static Button makeButton(String text, Runnable action) {
+        Button b = new Button(text);
+        Theme.styleButton(b);
+        b.setOnAction(e -> action.run());
+        return b;
+    }
 
-        // -> Optionnel : enlever l'indication pour quitter le fullscreen
-        // primaryStage.setFullScreenExitHint("");
-
-        primaryStage.show();
+    private static void loadParticipants(ObservableList<Participant> list) {
+        if (!Files.exists(SAVE_FILE)) return;
+        try {
+            Files.readAllLines(SAVE_FILE).stream()
+                    .filter(l -> !l.isBlank() && !l.startsWith("#"))
+                    .map(l -> l.split(";", -1))
+                    .filter(p -> p.length >= 3)
+                    .forEach(p -> {
+                        Participant part = new Participant(p[0], Integer.parseInt(p[1]), p[2]);
+                        if (p.length == 4 && !p[3].isBlank())
+                            for (String b : p[3].split("\\|")) part.addBonus(new Bonus(b));
+                        list.add(part);
+                    });
+        } catch (Exception ignored) { }
     }
 
     public static void main(String[] args) {

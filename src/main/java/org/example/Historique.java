@@ -1,5 +1,12 @@
 package org.example;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -10,83 +17,51 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import org.example.Participant;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+public final class Historique extends Stage {
 
-/**
- * Fenêtre affichant l'historique des tirages.
- * Chaque tirage est ajouté sous forme de ligne descriptive.
- */
-public class Historique extends Stage {
-
-    private final ObservableList<String> lignes = FXCollections.observableArrayList();
-    private final ListView<String> listView;
     private static final Path FILE = Path.of("loterie-historique.txt");
-    private static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    private final ObservableList<String> entries = FXCollections.observableArrayList();
 
     public Historique() {
         setTitle("Historique des tirages");
 
-        listView = new ListView<>(lignes);
-        Theme.styleListView(listView);
+        ListView<String> view = new ListView<>(entries);
+        Theme.styleListView(view);
 
-        Button btnSuppr = new Button("Supprimer");
-        Theme.styleButton(btnSuppr);
-        btnSuppr.setOnAction(e -> {
-            int idx = listView.getSelectionModel().getSelectedIndex();
-            if (idx >= 0) {
-                lignes.remove(idx);
-            }
-        });
+        Button delete = new Button("Supprimer");
+        Theme.styleButton(delete);
+        delete.disableProperty().bind(view.getSelectionModel().selectedItemProperty().isNull());
+        delete.setOnAction(e -> entries.remove(view.getSelectionModel().getSelectedIndex()));
 
-        VBox root = new VBox(10, listView, btnSuppr);
-        root.setPadding(new Insets(10));
-        Scene scene = new Scene(root, 400, 300);
-        setScene(scene);
+        VBox box = new VBox(10, view, delete);
+        box.setPadding(new Insets(10));
+        setScene(new Scene(box, 400, 300));
 
-        // Charge l'historique depuis le fichier s'il existe
-        loadHistory();
-
-        // Sauvegarde automatique à chaque modification
-        lignes.addListener((ListChangeListener<String>) c -> saveHistory());
+        load();
+        entries.addListener((ListChangeListener<String>) c -> save());
     }
 
-    /** Ajoute une ligne dans l'historique pour le tirage indiqué. */
-    public void logResult(String malusText) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(LocalDateTime.now().format(FORMATTER)).append(" - ");
-        sb.append("Malus attribué : ").append(malusText);
-        lignes.add(sb.toString());
-    }
+    public void logResult(String malus)   { entries.add(time() + " - Malus attribué : " + malus); }
+    public void logBonus(Participant p, String bonus) { entries.add(time() + " - " + p.getName() + " reçoit le bonus : " + bonus); }
 
-    /** Ajoute une ligne pour un bonus gagné par un participant. */
-    public void logBonus(Participant p, String bonusText) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(LocalDateTime.now().format(FORMATTER)).append(" - ");
-        sb.append(p.getName()).append(" reçoit le bonus : ").append(bonusText);
-        lignes.add(sb.toString());
-    }
+    private String time() { return LocalDateTime.now().format(FMT); }
 
-    private void loadHistory() {
+    private void load() {
         try {
-            if (Files.exists(FILE)) {
-                lignes.setAll(Files.readAllLines(FILE));
-            }
+            if (Files.exists(FILE)) entries.setAll(Files.readAllLines(FILE, StandardCharsets.UTF_8));
         } catch (IOException ex) {
-            System.err.println("Impossible de relire l'historique : " + ex.getMessage());
+            System.err.println("Load history failed: " + ex.getMessage());
         }
     }
 
-    private void saveHistory() {
+    private void save() {
         try {
-            Files.write(FILE, lignes);
+            Files.writeString(FILE, String.join(System.lineSeparator(), entries),
+                    StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException ex) {
-            System.err.println("Impossible de sauvegarder l'historique : " + ex.getMessage());
+            System.err.println("Save history failed: " + ex.getMessage());
         }
     }
 }

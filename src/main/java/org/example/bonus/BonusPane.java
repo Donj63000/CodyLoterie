@@ -1,22 +1,25 @@
 package org.example.bonus;
 
+import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import org.example.Theme;
 
-public class BonusPane {
+public final class BonusPane {
 
-    private final ObservableList<Bonus> bonus;
-    private final ListView<Bonus> list;
     private final VBox root = new VBox(8);
 
     public BonusPane(ObservableList<Bonus> bonus) {
-        this.bonus = bonus;
 
-        list = new ListView<>(bonus);
+        ListView<Bonus> list = new ListView<>(bonus);
         Theme.styleListView(list);
         list.setPrefHeight(280);
 
@@ -24,29 +27,31 @@ public class BonusPane {
         txt.setPromptText("Nouveau bonus…");
         Theme.styleTextField(txt);
 
-        Button add = new Button("Ajouter");   Theme.styleButton(add);
-        Button del = new Button("Supprimer"); Theme.styleButton(del);
-        Button edit= new Button("Modifier");  Theme.styleButton(edit);
+        Button add  = new Button("Ajouter");
+        Button edit = new Button("Modifier");
+        Button del  = new Button("Supprimer");
+        Theme.styleButton(add);
+        Theme.styleButton(edit);
+        Theme.styleButton(del);
 
-        add.setOnAction(e -> {
+        add.disableProperty().bind(txt.textProperty().isEmpty());
+        edit.disableProperty().bind(
+                Bindings.or(list.getSelectionModel().selectedItemProperty().isNull(),
+                        txt.textProperty().isEmpty()));
+        del.disableProperty().bind(list.getSelectionModel().selectedItemProperty().isNull());
+
+        Runnable addAction = () -> {
             String v = txt.getText().trim();
             if (!v.isEmpty()) { bonus.add(new Bonus(v)); txt.clear(); }
-        });
+        };
+        add.setOnAction(e -> addAction.run());
+        txt.setOnKeyPressed(e -> { if (e.getCode() == KeyCode.ENTER) addAction.run(); });
 
-        del.setOnAction(e -> {
-            int idx = list.getSelectionModel().getSelectedIndex();
-            if (idx >= 0) bonus.remove(idx);
-        });
+        del.setOnAction(e -> bonus.remove(list.getSelectionModel().getSelectedIndex()));
 
         edit.setOnAction(e -> {
             int idx = list.getSelectionModel().getSelectedIndex();
-            if (idx >= 0) {
-                String v = txt.getText().trim();
-                if (!v.isEmpty()) {
-                    bonus.set(idx, new Bonus(v));
-                    txt.clear();
-                }
-            }
+            if (idx >= 0) { bonus.set(idx, new Bonus(txt.getText().trim())); txt.clear(); }
         });
 
         Label lbl = new Label("Bonus :");

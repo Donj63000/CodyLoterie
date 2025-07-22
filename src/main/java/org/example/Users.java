@@ -1,118 +1,122 @@
 package org.example;
 
-import javafx.beans.property.*;
-import javafx.collections.*;
-import javafx.collections.ListChangeListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.util.StringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
-/**
- * Table des participants : chaque ligne reçoit une couleur unique,
- * indépendamment du pseudo (→ palettes vraiment distinctes).
- */
-public class Users {
-
-    private final ObservableList<Participant> participants = FXCollections.observableArrayList();
-    private final TableView<Participant>      table        = new TableView<>(participants);
-    private final VBox                        root         = new VBox(10);
+public final class Users {
 
     private static final double GOLDEN_ANGLE = 137.50776405003785;
+    private static final int TABLE_HEIGHT = 600;
 
-    public Users(){
+    private final ObservableList<Participant> participants = FXCollections.observableArrayList();
+    private final TableView<Participant> table = new TableView<>(participants);
+    private final VBox root = new VBox(12);
 
-        /* === Colonnes ================================================= */
-        TableColumn<Participant,String>  colNom   = new TableColumn<>("Nom");
-        TableColumn<Participant,Integer> colLevel = new TableColumn<>("Level");
-        TableColumn<Participant,String>  colClasse= new TableColumn<>("Classe");
+    public Users() {
+        TableColumn<Participant, String> colName = new TableColumn<>("Nom");
+        TableColumn<Participant, Integer> colLevel = new TableColumn<>("Level");
+        TableColumn<Participant, String> colClass = new TableColumn<>("Classe");
 
-        colNom   .setCellValueFactory(p -> p.getValue().nameProperty());
-        colLevel .setCellValueFactory(p -> p.getValue().levelProperty().asObject());
-        colClasse.setCellValueFactory(p -> p.getValue().classeProperty());
+        colName.setCellValueFactory(c -> c.getValue().nameProperty());
+        colLevel.setCellValueFactory(c -> c.getValue().levelProperty().asObject());
+        colClass.setCellValueFactory(c -> c.getValue().classeProperty());
 
-        /* === Cellule colorée par INDEX de ligne ======================= */
-        colNom.setCellFactory(column -> new TableCell<>() {
-            @Override protected void updateItem(String item, boolean empty){
-                super.updateItem(item, empty);
-                if(empty || item==null){ setText(null); setStyle(""); return; }
-
-                setText(item); setFont(Font.font("Arial", FontWeight.BOLD, 15));
-
-                int idx = getIndex();
-                double hue = (idx * GOLDEN_ANGLE) % 360;
-                javafx.scene.paint.Color c = javafx.scene.paint.Color.hsb(hue,.85,.9).brighter();
-                setStyle("-fx-text-fill:" + Theme.toWebColor(c) + ";");
+        colName.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(String val, boolean empty) {
+                super.updateItem(val, empty);
+                if (empty || val == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(val);
+                    setFont(Font.font("Arial", FontWeight.BOLD, 15));
+                    double hue = (getIndex() * GOLDEN_ANGLE) % 360;
+                    setStyle("-fx-text-fill:" + Theme.toWebColor(javafx.scene.paint.Color.hsb(hue, .85, .9).brighter()));
+                }
             }
         });
-        colLevel .setCellFactory(c -> new TextFieldTableCell<>(new IntegerStringConverter()));
-        colClasse.setCellFactory(TextFieldTableCell.forTableColumn());
 
-        colNom.setOnEditCommit(e -> {
-            Participant p = e.getRowValue();
-            p.setName(e.getNewValue());
-        });
-        colLevel.setOnEditCommit(e -> {
-            Participant p = e.getRowValue();
-            p.setLevel(e.getNewValue());
-        });
-        colClasse.setOnEditCommit(e -> {
-            Participant p = e.getRowValue();
-            p.setClasse(e.getNewValue());
-        });
+        colLevel.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
+        colClass.setCellFactory(TextFieldTableCell.forTableColumn());
 
-        table.getColumns().addAll(colNom, colLevel, colClasse);
+        colName.setOnEditCommit(e -> e.getRowValue().setName(e.getNewValue()));
+        colLevel.setOnEditCommit(e -> e.getRowValue().setLevel(e.getNewValue()));
+        colClass.setOnEditCommit(e -> e.getRowValue().setClasse(e.getNewValue()));
+
+        table.getColumns().addAll(colName, colLevel, colClass);
         table.setEditable(true);
-        table.setPrefHeight(600);
+        table.setPrefHeight(TABLE_HEIGHT);
         Theme.styleTableView(table);
 
-        /* === Formulaire =============================================== */
-        TextField tNom   = new TextField(); tNom.setPromptText("Pseudo");  Theme.styleTextField(tNom);
-        TextField tLevel  = new TextField(); tLevel.setPromptText("Level");  Theme.styleTextField(tLevel);
-        TextField tClasse = new TextField(); tClasse.setPromptText("Classe"); Theme.styleTextField(tClasse);
+        TextField tfName = buildField("Pseudo");
+        TextField tfLevel = buildField("Level");
+        TextField tfClass = buildField("Classe");
 
-        Button add = new Button("Ajouter");   Theme.styleButton(add);
-        Button del = new Button("Supprimer"); Theme.styleButton(del);
+        Button btnAdd = buildButton("Ajouter");
+        Button btnDel = buildButton("Supprimer");
 
-        add.setOnAction(e -> {
-            String n = tNom.getText().trim();
-            if (n.isEmpty()) return;
+        btnAdd.setOnAction(e -> {
+            String name = tfName.getText().trim();
+            String levelText = tfLevel.getText().trim();
+            if (name.isEmpty() || levelText.isEmpty()) return;
 
-            int lv;
             try {
-                lv = Integer.parseInt(tLevel.getText().trim());
+                int level = Integer.parseInt(levelText);
+                participants.add(new Participant(name, level, tfClass.getText().trim()));
+                tfName.clear();
+                tfLevel.clear();
+                tfClass.clear();
             } catch (NumberFormatException ex) {
                 Theme.showError("Le level doit être un nombre entier.");
-                return;
             }
-
-            participants.add(new Participant(n, lv, tClasse.getText().trim()));
-            tNom.clear(); tLevel.clear(); tClasse.clear();
-        });
-        del.setOnAction(e -> {
-            Participant sel = table.getSelectionModel().getSelectedItem();
-            if(sel!=null) participants.remove(sel);
         });
 
-        /* === Layout ==================================================== */
-        Label lbl = new Label("Participants :");
-        Theme.styleCapsuleLabel(lbl, "#4facfe", "#00f2fe");
-
-        root.getChildren().addAll(lbl, table, tNom, tLevel, tClasse, add, del);
-
-        /* === Sync roue ↔ table ======================================== */
-        participants.addListener((ListChangeListener<Participant>) change -> {
-            // Reconstruit la roue dès que la liste change via Main
+        btnDel.setOnAction(e -> {
+            Participant selected = table.getSelectionModel().getSelectedItem();
+            if (selected != null) participants.remove(selected);
         });
+
+        Label title = new Label("Participants :");
+        Theme.styleCapsuleLabel(title, "#4facfe", "#00f2fe");
+
+        root.setPadding(new Insets(0, 0, 0, 0));
+        root.getChildren().addAll(title, table, tfName, tfLevel, tfClass, btnAdd, btnDel);
     }
 
-    /* === API ========================================================== */
-    public ObservableList<Participant> getParticipants(){ return participants; }
-    public ObservableList<String> getParticipantNames(){
-        return FXCollections.observableArrayList(participants.stream().map(Participant::getName).toList());
+    private static TextField buildField(String prompt) {
+        TextField tf = new TextField();
+        tf.setPromptText(prompt);
+        Theme.styleTextField(tf);
+        return tf;
     }
-    public Node getRootPane(){ return root; }
+
+    private static Button buildButton(String text) {
+        Button btn = new Button(text);
+        Theme.styleButton(btn);
+        return btn;
+    }
+
+    public ObservableList<Participant> getParticipants() {
+        return participants;
+    }
+
+    public ObservableList<String> getParticipantNames() {
+        return participants.stream()
+                .map(Participant::getName)
+                .collect(FXCollections::observableArrayList, ObservableList::add, ObservableList::addAll);
+    }
+
+    public Node getRootPane() {
+        return root;
+    }
 }
