@@ -1,6 +1,11 @@
 package org.example.wheel;
 
-import javafx.animation.*;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.ParallelTransition;
+import javafx.animation.RotateTransition;
+import javafx.animation.Timeline;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
@@ -12,12 +17,15 @@ import javafx.scene.effect.Glow;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.*;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.Paint;
+import javafx.scene.paint.RadialGradient;
+import javafx.scene.paint.Stop;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.ArcType;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
-import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 import org.example.Main;
 import org.example.OptionRoue;
@@ -129,7 +137,6 @@ public abstract class BaseWheel<T> {
         wheelGroup.layout();
         SnapshotParameters sp = new SnapshotParameters();
         sp.setFill(Color.TRANSPARENT);
-        sp.setTransform(new Scale(0.75, 0.75));
         WritableImage img = wheelGroup.snapshot(sp, null);
         wheelImg.setImage(img);
         wheelImg.setFitWidth(img.getWidth());
@@ -190,7 +197,7 @@ public abstract class BaseWheel<T> {
                 new KeyFrame(Duration.ZERO, new KeyValue(a.fillProperty(), getHighlightColor())),
                 new KeyFrame(Duration.seconds(.6), new KeyValue(a.fillProperty(), base))
         );
-        pulse.setCycleCount(Animation.INDEFINITE);
+        pulse.setCycleCount(Timeline.INDEFINITE);
         pulse.setAutoReverse(true);
         winFx = new ParallelTransition(pulse);
         winFx.play();
