@@ -7,6 +7,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -30,7 +31,7 @@ public final class BonusDialog extends Stage {
         initModality(Modality.APPLICATION_MODAL);
 
         Resultat resultat = new Resultat();
-        BonusWheel wheel = new BonusWheel(resultat);
+        BonusWheel wheel  = new BonusWheel(resultat);
         wheel.updateWheelDisplay(bonusList);
 
         ComboBox<Participant> combo = new ComboBox<>(players);
@@ -48,6 +49,13 @@ public final class BonusDialog extends Stage {
         ListView<Bonus> playerBonus = new ListView<>();
         Theme.styleListView(playerBonus);
         playerBonus.setPrefHeight(260);
+        playerBonus.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(Bonus item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item.toString());
+                setStyle(empty ? "" : "-fx-font-size:18px;-fx-text-fill:#9be15d;");
+            }
+        });
 
         Button remove = new Button("Retirer");
         Theme.styleButton(remove);

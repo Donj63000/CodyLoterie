@@ -4,10 +4,7 @@ import javafx.beans.binding.Bindings;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -22,6 +19,13 @@ public final class BonusPane {
         ListView<Bonus> list = new ListView<>(bonus);
         Theme.styleListView(list);
         list.setPrefHeight(280);
+        list.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(Bonus item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty ? null : item.toString());
+                setStyle(empty ? "" : "-fx-font-size:18px;-fx-text-fill:#00e3ae;");
+            }
+        });
 
         TextField txt = new TextField();
         txt.setPromptText("Nouveau bonus…");
@@ -35,9 +39,8 @@ public final class BonusPane {
         Theme.styleButton(del);
 
         add.disableProperty().bind(txt.textProperty().isEmpty());
-        edit.disableProperty().bind(
-                Bindings.or(list.getSelectionModel().selectedItemProperty().isNull(),
-                        txt.textProperty().isEmpty()));
+        edit.disableProperty().bind(Bindings.or(list.getSelectionModel().selectedItemProperty().isNull(),
+                txt.textProperty().isEmpty()));
         del.disableProperty().bind(list.getSelectionModel().selectedItemProperty().isNull());
 
         Runnable addAction = () -> {
