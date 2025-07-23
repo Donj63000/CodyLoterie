@@ -92,5 +92,6 @@ public final class BonusDialog extends Stage {
         root.setBackground(Theme.makeBackgroundCover("/img_1.png"));
 
         setScene(new Scene(root, 800, 600));
+        setMaximized(true);
     }
 }

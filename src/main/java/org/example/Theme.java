@@ -13,24 +13,23 @@ import javafx.scene.text.FontWeight;
 
 public final class Theme {
 
-    public static final Color DARK_BG = Color.web("#121212");
-    public static final Color DARK_ELEVATION = Color.web("#1e1e1e");
-    public static final Color ACCENT = Color.web("#2196F3");
-    public static final Color ACCENT_LIGHT = Color.web("#42A5F5");
+    public static final Color DARK_BG = Color.web("#101010");
+    public static final Color DARK_ELEVATION = Color.web("#1b1b1b");
+    public static final Color ACCENT = Color.web("#e53935");
+    public static final Color ACCENT_LIGHT = Color.web("#ff7043");
     public static final Color TEXT_DEFAULT = Color.WHITE;
     public static final Font MAIN_FONT = Font.font("Arial", 14);
 
-    private static final String BASE_BTN =
-            "-fx-background-radius:8;-fx-text-fill:white;-fx-font-weight:bold;";
-    private static final String BTN_GRAD = "-fx-background-color:linear-gradient(#2196F3 0%, #1e88e5 100%);";
-    private static final String BTN_HOVER = "-fx-background-color:linear-gradient(#42a5f5 0%, #2196F3 100%);";
-    private static final String BTN_PRESSED = "-fx-background-color:#1565c0;";
+    private static final String BASE_BTN = "-fx-background-radius:10;-fx-text-fill:white;-fx-font-weight:bold;";
+    private static final String BTN_GRAD = "-fx-background-color:linear-gradient(#d32f2f 0%, #8e0000 100%);";
+    private static final String BTN_HOVER = "-fx-background-color:linear-gradient(#ff6f00 0%, #d84315 100%);";
+    private static final String BTN_PRESSED = "-fx-background-color:#4e0000;";
 
     private static final String BASE_CTRL =
-            "-fx-control-inner-background:#1e1e1e;" +
+            "-fx-control-inner-background:#1b1b1b;" +
                     "-fx-background-insets:0;" +
-                    "-fx-selection-bar:#2196F3;" +
-                    "-fx-selection-bar-non-focused:#1565c0;";
+                    "-fx-selection-bar:#d84315;" +
+                    "-fx-selection-bar-non-focused:#8e0000;";
 
     private Theme() {}
 
@@ -47,11 +46,10 @@ public final class Theme {
         b.setOnMouseEntered(e -> b.setStyle(normal + BTN_HOVER));
         b.setOnMouseExited(e -> b.setStyle(normal));
         b.pressedProperty().addListener((o, ov, nv) -> b.setStyle(nv ? normal + BTN_PRESSED : normal));
+        b.setEffect(new DropShadow(8, Color.web("#00000080")));
     }
 
-    public static void styleListView(ListView<?> lv) {
-        lv.setStyle(BASE_CTRL);
-    }
+    public static void styleListView(ListView<?> lv) { lv.setStyle(BASE_CTRL); }
 
     public static void styleTableView(TableView<?> tv) {
         styleControl(tv);
@@ -61,9 +59,7 @@ public final class Theme {
                 "-fx-border-color:transparent;");
     }
 
-    public static void styleControl(Control c) {
-        c.setStyle(BASE_CTRL);
-    }
+    public static void styleControl(Control c) { c.setStyle(BASE_CTRL); }
 
     public static String toWebColor(Color c) {
         return String.format("#%02X%02X%02X",
@@ -75,34 +71,29 @@ public final class Theme {
     private static void stylizeTextInput(Region n) {
         String base =
                 "-fx-background-radius:6;" +
-                        "-fx-background-color:#1e1e1e;" +
+                        "-fx-background-color:#1b1b1b;" +
                         "-fx-text-fill:white;" +
                         "-fx-prompt-text-fill:#bbbbbb;" +
-                        "-fx-border-color:#2196F3;" +
+                        "-fx-border-color:#d84315;" +
                         "-fx-border-radius:6;" +
                         "-fx-border-width:1;";
-        String focused = "-fx-border-color:#42A5F5;";
+        String focused = "-fx-border-color:#ff7043;";
         n.setStyle(base);
         n.focusedProperty().addListener((o, ov, nv) -> n.setStyle(nv ? base + focused : base));
     }
 
-    public static void styleTextField(TextField tf) {
-        stylizeTextInput(tf);
-    }
-
-    public static void styleTextArea(TextArea ta) {
-        stylizeTextInput(ta);
-    }
+    public static void styleTextField(TextField tf) { stylizeTextInput(tf); }
+    public static void styleTextArea(TextArea ta) { stylizeTextInput(ta); }
 
     public static void styleCapsuleLabel(Label label, String start, String end) {
-        label.setFont(Font.font("Roboto", FontWeight.BOLD, 18));
+        label.setFont(Font.font("Roboto", FontWeight.EXTRA_BOLD, 18));
         label.setTextFill(Color.WHITE);
         label.setPadding(new Insets(8, 16, 8, 16));
         label.setAlignment(Pos.CENTER);
         LinearGradient grad = new LinearGradient(0, 0, 1, 0, true, CycleMethod.NO_CYCLE,
                 new Stop(0, Color.web(start)), new Stop(1, Color.web(end)));
-        label.setBackground(new Background(new BackgroundFill(grad, new CornerRadii(15), Insets.EMPTY)));
-        label.setEffect(new DropShadow(10, Color.rgb(0, 0, 0, 0.35)));
+        label.setBackground(new Background(new BackgroundFill(grad, new CornerRadii(18), Insets.EMPTY)));
+        label.setEffect(new DropShadow(12, Color.rgb(0, 0, 0, 0.45)));
     }
 
     public static void showError(String msg) {

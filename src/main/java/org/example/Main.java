@@ -120,6 +120,7 @@ public final class Main extends Application {
 
         stage.setScene(new Scene(root, SCENE_WIDTH, SCENE_HEIGHT));
         stage.setTitle("Event PVP de la guilde EVOLUTION");
+        stage.setMaximized(true);
         stage.show();
     }
 

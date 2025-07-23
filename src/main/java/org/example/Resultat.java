@@ -16,20 +16,20 @@ import javafx.util.Duration;
 public final class Resultat {
 
     private static final Stop[] GRADIENT = {
-            new Stop(0, Color.web("#ff4d4d")),
-            new Stop(1, Color.web("#ffae42"))
+            new Stop(0, Color.web("#ffb700")),
+            new Stop(1, Color.web("#ff3b00"))
     };
 
     private final StackPane root = new StackPane();
-    private final Text icon = new Text("🎲");
+    private final Text icon = new Text("⚔");
     private final Text label = new Text("Résultat : ?");
     private final Timeline gradientLoop;
     private String lastMessage = "?";
 
     public Resultat() {
-        icon.setFont(Font.font("Segoe UI Emoji", FontWeight.BOLD, 26));
+        icon.setFont(Font.font("Segoe UI Emoji", FontWeight.EXTRA_BOLD, 28));
         icon.setFill(Color.WHITE);
-        label.setFont(Font.font("Montserrat", FontWeight.BOLD, 24));
+        label.setFont(Font.font("Montserrat", FontWeight.EXTRA_BOLD, 24));
         label.setFill(Color.WHITE);
 
         HBox content = new HBox(12, icon, label);
@@ -38,7 +38,7 @@ public final class Resultat {
         root.getChildren().add(content);
         root.setPadding(new Insets(14, 34, 14, 34));
         root.setMaxWidth(Region.USE_PREF_SIZE);
-        root.setEffect(new DropShadow(16, Color.rgb(120, 0, 0, .6)));
+        root.setEffect(new DropShadow(18, Color.web("#ff6f00")));
 
         DoubleProperty offset = new SimpleDoubleProperty();
         offset.addListener((o, ov, nv) -> root.setBackground(new Background(
@@ -49,19 +49,18 @@ public final class Resultat {
 
         gradientLoop = new Timeline(
                 new KeyFrame(Duration.ZERO, new KeyValue(offset, 0)),
-                new KeyFrame(Duration.seconds(6), new KeyValue(offset, 1)));
+                new KeyFrame(Duration.seconds(5), new KeyValue(offset, 1)));
         gradientLoop.setCycleCount(Animation.INDEFINITE);
         gradientLoop.setAutoReverse(true);
         gradientLoop.play();
     }
 
-    public Pane getNode()               { return root; }
-    public String getLastMessage()      { return lastMessage; }
+    public Pane getNode() { return root; }
+    public String getLastMessage() { return lastMessage; }
 
     public void setMessage(String msg) {
         lastMessage = msg;
         label.setText("Résultat : " + msg);
-        icon.setText("☠");
         root.setScaleX(.88);
         root.setScaleY(.88);
         ScaleTransition pop = new ScaleTransition(Duration.millis(260), root);

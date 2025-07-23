@@ -22,7 +22,7 @@ public final class MalusPane {
             @Override protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
                 setText(empty ? null : item);
-                setStyle(empty ? "" : "-fx-font-size:18px;-fx-text-fill:red;");
+                setStyle(empty ? "" : "-fx-font-size:18px;-fx-text-fill:#ff4d4d;");
             }
         });
 
@@ -60,7 +60,7 @@ public final class MalusPane {
         });
 
         Label lbl = new Label("Malus :");
-        Theme.styleCapsuleLabel(lbl, "#ff9a9e", "#fad0c4");
+        Theme.styleCapsuleLabel(lbl, "#ff4d4d", "#8b0000");
 
         root.setPadding(new Insets(10));
         root.getChildren().addAll(lbl, list, txt, new HBox(10, add, edit, del));

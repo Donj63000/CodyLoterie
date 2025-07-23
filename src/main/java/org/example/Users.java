@@ -9,7 +9,6 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.util.StringConverter;
 import javafx.util.converter.IntegerStringConverter;
 
 public final class Users {
@@ -41,7 +40,7 @@ public final class Users {
                     setText(val);
                     setFont(Font.font("Arial", FontWeight.BOLD, 15));
                     double hue = (getIndex() * GOLDEN_ANGLE) % 360;
-                    setStyle("-fx-text-fill:" + Theme.toWebColor(javafx.scene.paint.Color.hsb(hue, .85, .9).brighter()));
+                    setStyle("-fx-text-fill:" + Theme.toWebColor(javafx.scene.paint.Color.hsb(hue, .85, .9)));
                 }
             }
         });
@@ -69,7 +68,6 @@ public final class Users {
             String name = tfName.getText().trim();
             String levelText = tfLevel.getText().trim();
             if (name.isEmpty() || levelText.isEmpty()) return;
-
             try {
                 int level = Integer.parseInt(levelText);
                 participants.add(new Participant(name, level, tfClass.getText().trim()));
@@ -87,9 +85,9 @@ public final class Users {
         });
 
         Label title = new Label("Participants :");
-        Theme.styleCapsuleLabel(title, "#4facfe", "#00f2fe");
+        Theme.styleCapsuleLabel(title, "#ffd700", "#ff8c00");
 
-        root.setPadding(new Insets(0, 0, 0, 0));
+        root.setPadding(new Insets(0));
         root.getChildren().addAll(title, table, tfName, tfLevel, tfClass, btnAdd, btnDel);
     }
 
@@ -106,17 +104,6 @@ public final class Users {
         return btn;
     }
 
-    public ObservableList<Participant> getParticipants() {
-        return participants;
-    }
-
-    public ObservableList<String> getParticipantNames() {
-        return participants.stream()
-                .map(Participant::getName)
-                .collect(FXCollections::observableArrayList, ObservableList::add, ObservableList::addAll);
-    }
-
-    public Node getRootPane() {
-        return root;
-    }
+    public ObservableList<Participant> getParticipants() { return participants; }
+    public Node getRootPane() { return root; }
 }
