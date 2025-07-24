@@ -125,3 +125,40 @@ Lancer la roulette individuelle → appliquer son malus.
 Vérifier le respect des règles (globales + individuel).
 
 En cas de non-respect, le joueur déclare forfait et l’autre est déclaré vainqueur.
+
+
+
+
+
+RESULTATS DES ROULETTES : 
+
+Dans les deux roues (MalusWheel et BonusWheel) la logique de tirage est entièrement héritée de BaseWheel<T>.
+Lorsque la méthode spinTheWheel() est invoquée :
+
+
+int idx = ThreadLocalRandom.current().nextInt(seatNames.length);
+Choix de l’index
+
+ThreadLocalRandom.current().nextInt(n) renvoie un entier uniforme dans l’intervalle [0, n).
+
+n vaut le nombre de cases (seatNames.length).
+
+Chaque case possède donc exactement 1 / n de probabilité d’être choisie.
+
+Représentation graphique
+
+Dans updateWheelDisplay, l’angle attribué à chaque case est calculé avec
+
+
+double step = 360.0 / n;
+Chaque secteur occupe donc le même angle (step) : toutes les cases ont la même taille visuelle.
+
+Positionnement du pointeur
+
+Après avoir tiré idx, la roue est animée jusqu’à l’angle
+
+
+double target = idx * sector + sector / 2 - 90;
+Ce calcul n’influence pas la probabilité ; il ne sert qu’à arrêter la roue de façon à ce que la case gagnante se trouve sous la pointe du curseur.
+
+En résumé : les cases d’une roue ont toutes la même probabilité d’être tirées, tant pour les malus que pour les bonus.
