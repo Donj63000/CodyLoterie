@@ -1,6 +1,7 @@
 package org.example.bonus;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -33,6 +34,9 @@ public final class BonusDialog extends Stage {
         Resultat resultat = new Resultat();
         BonusWheel wheel  = new BonusWheel(resultat);
         wheel.updateWheelDisplay(bonusList);
+
+        bonusList.addListener((ListChangeListener<Bonus>) c ->
+                wheel.updateWheelDisplay(bonusList));
 
         ComboBox<Participant> combo = new ComboBox<>(players);
         combo.setPromptText("Joueur");
