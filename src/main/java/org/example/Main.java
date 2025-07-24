@@ -8,25 +8,27 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import org.example.bonus.Bonus;
 import org.example.bonus.BonusDialog;
 import org.example.wheel.MalusWheel;
+
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public final class Main extends Application {
 
     public static final double SCENE_WIDTH = 1200;
     public static final double SCENE_HEIGHT = 900;
     public static final double WHEEL_RADIUS = 320;
-    private static final Path SAVE_FILE = Path.of("loterie-save.txt");
 
     @Override
     public void start(Stage stage) {
+
         BorderPane root = new BorderPane();
         root.setBackground(Theme.makeBackgroundCover("/img.png"));
 
@@ -42,17 +44,35 @@ public final class Main extends Application {
         left.setPrefSize(420, 820);
         root.setLeft(left);
 
-        ObservableList<String> malus = FXCollections.observableArrayList(
-                "Tu boites sévère (–2\u202FPM)",
-                "Enragé (fin de tour au corps-à-corps)",
-                "Trop peureux (\u2265\u202F6\u202FPO)",
-                "Panoplie imposée",
-                "Sorcier myope (\u2264\u202F3\u202FPO)",
-                "Narcoleptique (skip 1 tour tous les 3 tours)",
-                "Écho étrange (1 sort/tour, toujours différent)",
-                "Oubli du familier",
-                "Aucun sort élémentaire (seulement neutres ou utilitaires)"
-        );
+        ObservableList<String> malus = FXCollections.observableArrayList();
+        ObservableList<Bonus>  bonusMaster = FXCollections.observableArrayList();
+
+        try {
+            Save.load(users.getParticipants(), malus, bonusMaster);
+        } catch (IOException ignored) { }
+
+        if (malus.isEmpty()) {
+            malus.addAll(
+                    "Tu boites sévère (–2 PM)",
+                    "Enragé (fin de tour au corps-à-corps)",
+                    "Trop peureux (≥ 6 PO)",
+                    "Panoplie imposée",
+                    "Sorcier myope (≤ 3 PO)",
+                    "Narcoleptique (skip 1 tour tous les 3 tours)",
+                    "Écho étrange (1 sort/tour, toujours différent)",
+                    "Oubli du familier",
+                    "Aucun sort élémentaire (seulement neutres ou utilitaires)"
+            );
+        }
+
+        if (bonusMaster.isEmpty()) {
+            bonusMaster.addAll(
+                    new Bonus("Puissance +100"),
+                    new Bonus("Dommages ×1,2"),
+                    new Bonus("Initiative +500")
+            );
+        }
+
         MalusPane malusPane = new MalusPane(malus);
         VBox right = new VBox(malusPane.getRootPane());
         right.setPadding(new Insets(0, 20, 10, 10));
@@ -70,14 +90,6 @@ public final class Main extends Application {
         malus.addListener((ListChangeListener<String>) c -> wheel.updateWheelDisplay(malus));
         wheel.updateWheelDisplay(malus);
 
-        ObservableList<Bonus> bonusMaster = FXCollections.observableArrayList(
-                new Bonus("Puissance +100"),
-                new Bonus("Dommages ×1,2"),
-                new Bonus("Initiative +500")
-        );
-
-        loadParticipants(users.getParticipants());
-
         users.getParticipants().addListener(
                 (ListChangeListener<Participant>) c -> wheel.updateWheelDisplay(malus));
 
@@ -93,7 +105,7 @@ public final class Main extends Application {
 
         Button save = makeButton("Sauvegarder état", () -> {
             try {
-                Save.save(users.getParticipants());
+                Save.save(users.getParticipants(), malus, bonusMaster);
                 resultat.setMessage("État sauvegardé ✔");
             } catch (IOException ex) {
                 resultat.setMessage("Erreur de sauvegarde ✖");
@@ -101,7 +113,7 @@ public final class Main extends Application {
         });
 
         Button clean = makeButton("Nettoyer", () -> {
-            Save.reset(users.getParticipants());
+            Save.reset(users.getParticipants(), malus, bonusMaster);
             wheel.updateWheelDisplay(malus);
             resultat.setMessage("Nouvelle loterie prête");
         });
@@ -129,22 +141,6 @@ public final class Main extends Application {
         Theme.styleButton(b);
         b.setOnAction(e -> action.run());
         return b;
-    }
-
-    private static void loadParticipants(ObservableList<Participant> list) {
-        if (!Files.exists(SAVE_FILE)) return;
-        try {
-            Files.readAllLines(SAVE_FILE).stream()
-                    .filter(l -> !l.isBlank() && !l.startsWith("#"))
-                    .map(l -> l.split(";", -1))
-                    .filter(p -> p.length >= 3)
-                    .forEach(p -> {
-                        Participant part = new Participant(p[0], Integer.parseInt(p[1]), p[2]);
-                        if (p.length == 4 && !p[3].isBlank())
-                            for (String b : p[3].split("\\|")) part.addBonus(new Bonus(b));
-                        list.add(part);
-                    });
-        } catch (Exception ignored) { }
     }
 
     public static void main(String[] args) {
